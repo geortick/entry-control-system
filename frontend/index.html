@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Control de Acceso</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #dc3545;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        
+        #videoContainer { 
+            position: relative; 
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: white;
+            padding: 15px;
+            border: 3px solid #007bff;
+        }
+        
+        #video {
+            border-radius: 8px;
+            display: block;
+        }
+        
+        #statusBox { 
+            margin-top: 25px; 
+            padding: 15px 30px; 
+            border-radius: 8px; 
+            min-width: 350px; 
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .status-default { 
+            background-color: white; 
+            color: #333;
+            border: 2px solid #007bff;
+        }
+        
+        .status-success { 
+            background-color: #ffffff; 
+            color: #28a745;
+            border: 2px solid #28a745;
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        .status-error { 
+            background-color: #ffffff; 
+            color: #dc3545;
+            border: 2px solid #dc3545;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        #buttonContainer {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        button {
+            background: #dc3545;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            color: white;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #c82333;
+            border-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .admin-link {
+            margin-top: 30px;
+            color: #007bff;
+            text-decoration: none;
+            background: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 2px solid #007bff;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .admin-link:hover {
+            background: #007bff;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Sistema de Control de Acceso</h1>
+    <div id="videoContainer">
+        <video id="video" width="640" height="480" autoplay muted></video>
+    </div>
+    <div id="statusBox" class="status-default">Posicione su rostro en el marco.</div>
+    <div id="buttonContainer" class="hidden">
+        <button onclick="tryAgain()">Intentar de Nuevo</button>
+        <button onclick="registerAsVisitor()">Registrarse como Visitante</button>
+    </div>
+    <a href="/admin.html" class="admin-link">Administración</a>
+
+    <script>
+        let video;
+        let canvas;
+        let isRecognizing = false;
+        let recognitionInterval;
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480 }
+                });
+                video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                // Start automatic recognition every 2 seconds
+                recognitionInterval = setInterval(captureAndRecognize, 2000);
+                updateStatus('Cámara iniciada. Reconocimiento facial activo.', 'default');
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                updateStatus('Error al acceder a la cámara. Por favor permita el acceso a la cámara.', 'error');
+            }
+        }
+
+        function updateStatus(message, type) {
+            const statusBox = document.getElementById('statusBox');
+            statusBox.textContent = message;
+            statusBox.className = `status-${type}`;
+        }
+
+        async function captureAndRecognize() {
+            if (isRecognizing || !video) return;
+            
+            isRecognizing = true;
+            
+            try {
+                // Create canvas to capture frame
+                if (!canvas) {
+                    canvas = document.createElement('canvas');
+                    canvas.width = 640;
+                    canvas.height = 480;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, 640, 480);
+                
+                // Convert to blob
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', blob, 'capture.jpg');
+                        
+                        const response = await fetch('http://127.0.0.1:8000/recognize/', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        handleRecognitionResult(result);
+                    } catch (error) {
+                        console.error('Recognition error:', error);
+                        updateStatus('Error de conexión. Verifique que el servidor esté funcionando.', 'error');
+                    } finally {
+                        isRecognizing = false;
+                    }
+                }, 'image/jpeg', 0.8);
+            } catch (error) {
+                console.error('Capture error:', error);
+                isRecognizing = false;
+            }
+        }
+
+        function handleRecognitionResult(result) {
+            if (result.status === 'success') {
+                if (result.result === 'Recognized') {
+                    updateStatus(`¡Bienvenido, ${result.name}! Acceso concedido.`, 'success');
+                    // You could add logic here to unlock a door, log the entry, etc.
+                    setTimeout(() => {
+                        updateStatus('Posicione su rostro en el marco.', 'default');
+                    }, 3000);
+                } else {
+                    updateStatus('Rostro no reconocido. Intente de nuevo o regístrese como visitante.', 'error');
+                    showButtons();
+                }
+            } else {
+                updateStatus(result.message || 'Reconocimiento fallido', 'error');
+            }
+        }
+
+        function showButtons() {
+            const buttonContainer = document.getElementById('buttonContainer');
+            buttonContainer.classList.remove('hidden');
+            
+            // Hide buttons after 5 seconds
+            setTimeout(() => {
+                buttonContainer.classList.add('hidden');
+                updateStatus('Posicione su rostro en el marco.', 'default');
+            }, 5000);
+        }
+
+        function tryAgain() {
+            const buttonContainer = document.getElementById('buttonContainer');
+            buttonContainer.classList.add('hidden');
+            updateStatus('Posicione su rostro en el marco.', 'default');
+        }
+
+        async function registerAsVisitor() {
+            const name = prompt('Por favor ingrese su nombre:');
+            if (!name) return;
+            
+            try {
+                // Capture current frame for registration
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, 640, 480);
+                
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', blob, 'visitor.jpg');
+                        formData.append('name', name);
+                        formData.append('user_type', 'Visitant');
+                        
+                        updateStatus('Registrando visitante...', 'default');
+                        
+                        const response = await fetch('http://127.0.0.1:8000/register/', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.status === 'success') {
+                            updateStatus(`¡Bienvenido, ${name}! Ha sido registrado como visitante.`, 'success');
+                        } else {
+                            updateStatus(result.message || 'Registro fallido', 'error');
+                        }
+                        
+                        const buttonContainer = document.getElementById('buttonContainer');
+                        buttonContainer.classList.add('hidden');
+                    } catch (error) {
+                        console.error('Registration error:', error);
+                        updateStatus('Registro fallido. Por favor intente de nuevo.', 'error');
+                    }
+                }, 'image/jpeg', 0.8);
+            } catch (error) {
+                console.error('Capture error:', error);
+                updateStatus('Error al capturar la imagen para el registro.', 'error');
+            }
+        }
+
+        // Start camera when page loads
+        window.addEventListener('load', startCamera);
+    </script>
+</body>
+</html>

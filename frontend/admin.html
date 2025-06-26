@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administración - Control de Acceso</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #dc3545;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 800px;
+            transition: all 0.3s ease;
+            border: 3px solid #007bff;
+        }
+
+        .login-container {
+            max-width: 400px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .nav-tab {
+            background: none;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+
+        .nav-tab:hover {
+            color: #007bff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input[type="text"], input[type="password"], input[type="file"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: 2px solid #007bff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        button:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+
+        .full-width {
+            width: 100%;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+            font-weight: 600;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .users-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .user-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .user-type.Authorized {
+            color: #28a745;
+        }
+
+        .user-type.Visitant {
+            color: #fd7e14;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .delete-button {
+            background: #dc3545;
+            border: 2px solid #dc3545;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .delete-button:hover {
+            background: #c82333;
+            border-color: #c82333;
+        }
+
+        .back-link {
+            margin-top: 30px;
+            color: #007bff;
+            text-decoration: none;
+            background: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 2px solid #007bff;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+        }
+
+        .back-link:hover {
+            background: #007bff;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        .hidden { display: none; }
+
+        .logout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        /* Photo capture styles */
+        .photo-input-container {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        
+        .photo-method-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .photo-tab {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+        
+        .photo-tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+        
+        .photo-tab:hover {
+            color: #007bff;
+        }
+        
+        .photo-section {
+            display: none;
+        }
+        
+        .photo-section.active {
+            display: block;
+        }
+        
+        #camera-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        #admin-video {
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            background: #000;
+        }
+        
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .camera-controls button {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        #photo-preview {
+            text-align: center;
+        }
+        
+        #captured-image {
+            border: 2px solid #28a745;
+            border-radius: 8px;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            border-color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        button:disabled:hover {
+            background: #6c757d;
+            border-color: #6c757d;
+            transform: none;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1>Panel de Administración</h1>
+    
+    <!-- Login Container -->
+    <div class="container login-container" id="loginContainer">
+        <h2>Por favor, Inicie Sesión</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" placeholder="admin" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" placeholder="admin" required>
+            </div>
+            <button type="submit" class="full-width">Iniciar Sesión</button>
+        </form>
+        <div class="message" id="loginMessage"></div>
+    </div>
+
+    <!-- Dashboard Container -->
+    <div class="container hidden" id="dashboardContainer">
+        <button class="logout-button" onclick="logout()">Cerrar Sesión</button>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('users')">Gestionar Usuarios</button>
+            <button class="nav-tab" onclick="showTab('register')">Registrar Nuevo Usuario</button>
+        </div>
+
+        <!-- Users Tab -->
+        <div class="tab-content active" id="users-tab">
+            <h2>Usuarios Registrados</h2>
+            <div class="message" id="userMessage"></div>
+            <div class="users-grid" id="usersGrid"></div>
+        </div>
+
+        <!-- Register Tab -->
+        <div class="tab-content" id="register-tab">
+            <h2>Registrar Nuevo Usuario</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="name">Nombre:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userType">Tipo de Usuario:</label>
+                    <select id="userType" name="userType">
+                        <option value="Authorized">Autorizado</option>
+                        <option value="Visitant">Visitante</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="photo">Foto:</label>
+                    <div class="photo-input-container">
+                        <div class="photo-method-tabs">
+                            <button type="button" class="photo-tab active" onclick="switchPhotoMethod('camera')">Tomar Foto</button>
+                            <button type="button" class="photo-tab" onclick="switchPhotoMethod('upload')">Subir Archivo</button>
+                        </div>
+                        
+                        <!-- Camera capture section -->
+                        <div id="camera-section" class="photo-section active">
+                            <div id="camera-container">
+                                <video id="admin-video" width="320" height="240" autoplay muted></video>
+                                <canvas id="admin-canvas" width="320" height="240" style="display: none;"></canvas>
+                            </div>
+                            <div class="camera-controls">
+                                <button type="button" id="start-camera-btn" onclick="startAdminCamera()">Iniciar Cámara</button>
+                                <button type="button" id="capture-btn" onclick="capturePhoto()" disabled>Capturar Foto</button>
+                                <button type="button" id="retake-btn" onclick="retakePhoto()" style="display: none;">Tomar Otra</button>
+                            </div>
+                            <div id="photo-preview" style="display: none;">
+                                <img id="captured-image" width="320" height="240" />
+                            </div>
+                        </div>
+                        
+                        <!-- File upload section -->
+                        <div id="upload-section" class="photo-section">
+                            <input type="file" id="photo" name="photo" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="full-width">Registrar Usuario</button>
+            </form>
+            <div class="message" id="registerMessage"></div>
+        </div>
+    </div>
+    
+    <a href="/index.html" class="back-link">← Volver al Control de Acceso</a>
+
+    <script>
+        let isLoggedIn = false;
+
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/admin/login/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage('loginMessage', '¡Inicio de sesión exitoso!', 'success');
+                    isLoggedIn = true;
+                    setTimeout(() => {
+                        document.getElementById('loginContainer').classList.add('hidden');
+                        document.getElementById('dashboardContainer').classList.remove('hidden');
+                        loadUsers();
+                    }, 1000);
+                } else {
+                    showMessage('loginMessage', 'Usuario o contraseña inválidos', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage('loginMessage', 'Error de conexión. Por favor intente de nuevo.', 'error');
+            }
+        });
+
+        // Register functionality
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('name', document.getElementById('name').value);
+            formData.append('user_type', document.getElementById('userType').value);
+            
+            // Check which photo method is being used
+            const cameraSection = document.getElementById('camera-section');
+            const uploadSection = document.getElementById('upload-section');
+            
+            if (cameraSection.classList.contains('active')) {
+                // Using camera capture
+                if (!capturedBlob) {
+                    showMessage('registerMessage', 'Por favor capture una foto primero.', 'error');
+                    return;
+                }
+                formData.append('file', capturedBlob, 'captured.jpg');
+            } else {
+                // Using file upload
+                const fileInput = document.getElementById('photo');
+                if (!fileInput.files[0]) {
+                    showMessage('registerMessage', 'Por favor seleccione un archivo de imagen.', 'error');
+                    return;
+                }
+                formData.append('file', fileInput.files[0]);
+            }
+            
+            showMessage('registerMessage', 'Registrando usuario...', 'success');
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/register/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showMessage('registerMessage', result.message, 'success');
+                    
+                    // Reset form and camera
+                    document.getElementById('registerForm').reset();
+                    resetPhotoCapture();
+                    
+                    loadUsers(); // Refresh user list
+                } else {
+                    showMessage('registerMessage', result.message || 'Registro fallido', 'error');
+                }
+            } catch (error) {
+                showMessage('registerMessage', 'Error al conectar con el servidor', 'error');
+            }
+        });
+
+        // Load and display users
+        async function loadUsers() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/admin/users/');
+                const result = await response.json();
+                const usersGrid = document.getElementById('usersGrid');
+                usersGrid.innerHTML = '';
+
+                if (result.status === 'success') {
+                    if (result.users.length === 0) {
+                        usersGrid.innerHTML = '<p>No hay usuarios registrados aún.</p>';
+                        return;
+                    }
+                    
+                    result.users.forEach(user => {
+                        const userCard = document.createElement('div');
+                        userCard.className = 'user-card';
+                        userCard.innerHTML = `
+                            <div class="user-name">${user.name}</div>
+                            <div class="user-type ${user.user_type}">${user.user_type}</div>
+                            <div>Registrado: ${new Date(user.created_at).toLocaleDateString()}</div>
+                            <div class="user-actions">
+                                <button class="delete-button" onclick="deleteUser('${user.id}', '${user.name}')">Eliminar</button>
+                            </div>
+                        `;
+                        usersGrid.appendChild(userCard);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showMessage('userMessage', 'Error al cargar usuarios', 'error');
+            }
+        }
+
+        // Delete user
+        async function deleteUser(userId, userName) {
+            if (!confirm(`¿Está seguro de que desea eliminar al usuario "${userName}"?`)) return;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showMessage('userMessage', `Usuario "${userName}" eliminado exitosamente`, 'success');
+                    loadUsers();
+                } else {
+                    showMessage('userMessage', 'Error al eliminar usuario', 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showMessage('userMessage', 'Error al eliminar usuario', 'error');
+            }
+        }
+
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Logout functionality
+        function logout() {
+            isLoggedIn = false;
+            document.getElementById('dashboardContainer').classList.add('hidden');
+            document.getElementById('loginContainer').classList.remove('hidden');
+            document.getElementById('loginForm').reset();
+        }
+
+        // Show message helper
+        function showMessage(elementId, message, type) {
+            const messageEl = document.getElementById(elementId);
+            messageEl.textContent = message;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Camera functionality variables
+        let adminStream = null;
+        let capturedBlob = null;
+        
+        // Switch between camera and upload methods
+        function switchPhotoMethod(method) {
+            // Update tabs
+            document.querySelectorAll('.photo-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update sections
+            document.querySelectorAll('.photo-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(method + '-section').classList.add('active');
+            
+            // Stop camera if switching away from camera
+            if (method === 'upload' && adminStream) {
+                stopAdminCamera();
+            }
+        }
+        
+        // Start admin camera
+        async function startAdminCamera() {
+            try {
+                adminStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 320, height: 240 }
+                });
+                
+                const video = document.getElementById('admin-video');
+                video.srcObject = adminStream;
+                
+                // Enable capture button
+                document.getElementById('start-camera-btn').disabled = true;
+                document.getElementById('capture-btn').disabled = false;
+                
+                showMessage('registerMessage', 'Cámara iniciada. Listo para capturar foto.', 'success');
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                showMessage('registerMessage', 'Error al acceder a la cámara. Por favor permita el acceso.', 'error');
+            }
+        }
+        
+        // Stop admin camera
+        function stopAdminCamera() {
+            if (adminStream) {
+                adminStream.getTracks().forEach(track => track.stop());
+                adminStream = null;
+                
+                const video = document.getElementById('admin-video');
+                video.srcObject = null;
+                
+                // Reset buttons
+                document.getElementById('start-camera-btn').disabled = false;
+                document.getElementById('capture-btn').disabled = true;
+            }
+        }
+        
+        // Capture photo from admin camera
+        function capturePhoto() {
+            const video = document.getElementById('admin-video');
+            const canvas = document.getElementById('admin-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Draw video frame to canvas
+            ctx.drawImage(video, 0, 0, 320, 240);
+            
+            // Convert to blob
+            canvas.toBlob((blob) => {
+                capturedBlob = blob;
+                
+                // Show preview
+                const capturedImage = document.getElementById('captured-image');
+                capturedImage.src = URL.createObjectURL(blob);
+                document.getElementById('photo-preview').style.display = 'block';
+                
+                // Update buttons
+                document.getElementById('capture-btn').style.display = 'none';
+                document.getElementById('retake-btn').style.display = 'inline-block';
+                
+                // Stop camera
+                stopAdminCamera();
+                
+                showMessage('registerMessage', 'Foto capturada exitosamente.', 'success');
+            }, 'image/jpeg', 0.8);
+        }
+        
+        // Retake photo
+        function retakePhoto() {
+            // Hide preview
+            document.getElementById('photo-preview').style.display = 'none';
+            
+            // Reset buttons
+            document.getElementById('capture-btn').style.display = 'inline-block';
+            document.getElementById('retake-btn').style.display = 'none';
+            
+            // Clear captured blob
+            capturedBlob = null;
+            
+            // Restart camera
+            startAdminCamera();
+        }
+        
+        // Reset photo capture (called after successful registration)
+        function resetPhotoCapture() {
+            // Stop camera if running
+            stopAdminCamera();
+            
+            // Hide preview
+            document.getElementById('photo-preview').style.display = 'none';
+            
+            // Reset buttons
+            document.getElementById('capture-btn').style.display = 'inline-block';
+            document.getElementById('retake-btn').style.display = 'none';
+            document.getElementById('start-camera-btn').disabled = false;
+            document.getElementById('capture-btn').disabled = true;
+            
+            // Clear captured blob
+            capturedBlob = null;
+            
+            // Reset to camera tab by default
+            document.querySelectorAll('.photo-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector('.photo-tab[onclick*="camera"]').classList.add('active');
+            
+            document.querySelectorAll('.photo-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('camera-section').classList.add('active');
+        }
+    </script>
+</body>
+</html>

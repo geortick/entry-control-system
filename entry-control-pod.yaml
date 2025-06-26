@@ -1,0 +1,55 @@
+# Entry Control System - Facial Recognition Access Control
+# Deploy with: podman play kube entry-control-pod.yaml
+# Access: http://localhost:8080 (main) | http://localhost:8080/admin.html (admin)
+# Created from entry-control-system
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: entry-control-pod
+  name: entry-control-pod
+spec:
+  containers:
+  - args:
+    - mongod
+    env:
+    - name: MONGO_INITDB_ROOT_USERNAME
+      value: mongo_user
+    - name: MONGO_INITDB_ROOT_PASSWORD
+      value: mongo_pass
+    image: docker.io/library/mongo:latest
+    name: mongo-db
+    ports:
+    - containerPort: 8000
+      hostPort: 8000
+    - containerPort: 80
+      hostPort: 8080
+    volumeMounts:
+    - mountPath: /data/db
+      name: mongo-data-pvc
+    - mountPath: /data/configdb
+      name: mongo-config-pvc
+  - env:
+    - name: MONGO_URI
+      value: mongodb://mongo_user:mongo_pass@localhost:27017
+    image: docker.io/YOUR_DOCKERHUB_USERNAME/entry-control-backend:1.0
+    name: backend
+  - args:
+    - nginx
+    - -g
+    - daemon off;
+    image: docker.io/library/nginx:alpine
+    name: frontend
+    volumeMounts:
+    - mountPath: /usr/share/nginx/html
+      name: frontend-files
+      readOnly: true
+  volumes:
+  - name: mongo-data-pvc
+    emptyDir: {}
+  - name: mongo-config-pvc  
+    emptyDir: {}
+  - name: frontend-files
+    configMap:
+      name: frontend-config
+
