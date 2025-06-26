@@ -22,7 +22,7 @@ A facial recognition-based entry control system with camera capture, user manage
 
 1. **Clone this repository**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/entry-control-system.git
+   git clone https://github.com/geortick/entry-control-system.git
    cd entry-control-system
    ```
 
@@ -68,26 +68,21 @@ podman play kube --down entry-control-system.yaml
 
 ### Building from Source
 
+If you want to modify and rebuild the system:
+
 1. **Backend (Python FastAPI)**:
    ```bash
    cd backend/
-   podman build -t your-username/entry-control-backend:1.0 .
+   podman build -t entry-control-backend .
    ```
 
 2. **Frontend (Nginx + Static Files)**:
    ```bash
    cd frontend/
-   podman build -t your-username/entry-control-frontend:1.0 .
+   podman build -t entry-control-frontend .
    ```
 
-3. **Push to GitHub Container Registry** (for sharing):
-   ```bash
-   podman login ghcr.io
-   podman push ghcr.io/your-username/entry-control-backend:1.0
-   podman push ghcr.io/your-username/entry-control-frontend:1.0
-   ```
-
-4. **Update YAML file** with your image names in `entry-control-system.yaml`
+3. **For local testing**, update the YAML file to use your local images instead of the GHCR ones
 
 ### Manual Pod Creation
 ```bash
@@ -102,10 +97,10 @@ podman run -d --pod entry-control-pod --name mongo-db \
 
 podman run -d --pod entry-control-pod --name backend \
   -e MONGO_URI="mongodb://mongo_user:mongo_pass@localhost:27017" \
-  ghcr.io/your-username/entry-control-backend:1.0
+  ghcr.io/geortick/entry-control-backend:1.0
 
 podman run -d --pod entry-control-pod --name frontend \
-  ghcr.io/your-username/entry-control-frontend:1.0
+  ghcr.io/geortick/entry-control-frontend:1.0
 ```
 
 ## 🏗 Architecture
@@ -124,12 +119,12 @@ podman run -d --pod entry-control-pod --name frontend \
 
 ## 🐳 Container Images
 
-- **Backend**: `ghcr.io/your-username/entry-control-backend:1.0`
+- **Backend**: `ghcr.io/geortick/entry-control-backend:1.0`
   - Python 3.9 + FastAPI + OpenCV + face_recognition
   - Handles facial recognition processing
   - REST API for registration and authentication
 
-- **Frontend**: `ghcr.io/your-username/entry-control-frontend:1.0`
+- **Frontend**: `ghcr.io/geortick/entry-control-frontend:1.0`
   - Nginx Alpine + Static HTML/CSS/JS
   - Spanish interface with camera integration
   - Admin management panel
