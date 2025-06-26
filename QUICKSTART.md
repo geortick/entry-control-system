@@ -1,36 +1,30 @@
 # 🚀 Quick Start Guide
 
-## For the Project Creator (You)
+## For Contributors/Developers
 
-### Step 1: Push Images to GitHub Container Registry
+If you want to modify and republish this system:
+
+### Step 1: Build and Push Your Own Images
 ```bash
-# Run the deployment setup script with your GitHub username
-./deploy-setup.sh YOUR_GITHUB_USERNAME
+# Build the images
+cd backend && podman build -t ghcr.io/YOUR_USERNAME/entry-control-backend:1.0 .
+cd ../frontend && podman build -t ghcr.io/YOUR_USERNAME/entry-control-frontend:1.0 .
 
-# This will:
-# 1. Login to GitHub Container Registry (enter your GitHub username and Personal Access Token)
-# 2. Tag and push both backend and frontend images
-# 3. Update the YAML file with your username
+# Login to GitHub Container Registry
+podman login ghcr.io
+
+# Push the images
+podman push ghcr.io/YOUR_USERNAME/entry-control-backend:1.0
+podman push ghcr.io/YOUR_USERNAME/entry-control-frontend:1.0
 ```
 
-**🔑 You'll need a GitHub Personal Access Token:**
-- Go to https://github.com/settings/tokens
-- Create a new token with `write:packages` permission
-- Use your GitHub username and the token (not your password) when prompted
+### Step 2: Update the YAML file
+Edit `entry-control-system.yaml` to use your image names instead of `ghcr.io/geortick/...`
 
-### Step 2: Test Your Deployment
+### Step 3: Test Your Deployment
 ```bash
 # Test that everything works
 ./test-deployment.sh
-```
-
-### Step 3: Commit to Git Repository
-```bash
-git init
-git add .
-git commit -m "Initial entry control system with camera capture"
-git remote add origin https://github.com/YOUR_USERNAME/entry-control-system.git
-git push -u origin main
 ```
 
 ## For Others Using Your System

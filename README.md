@@ -41,6 +41,12 @@ A facial recognition-based entry control system with camera capture, user manage
 podman play kube --down entry-control-system.yaml
 ```
 
+### Test Your Deployment (Optional)
+```bash
+# Run the test script to verify everything is working
+./test-deployment.sh
+```
+
 ## 📱 Usage
 
 ### Main Entry Control Interface
