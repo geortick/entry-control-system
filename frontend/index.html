@@ -3,163 +3,335 @@
 <head>
     <meta charset="UTF-8">
     <title>Control de Acceso</title>
+    <!-- Import Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            background: white;
+            background: #333;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
         
-        h1 {
-            color: #dc3545;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            font-weight: bold;
+        .main-container {
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
         }
         
         #videoContainer { 
-            position: relative; 
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            background: white;
-            padding: 15px;
-            border: 3px solid #007bff;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 320px;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
         
         #video {
-            border-radius: 8px;
-            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
         }
         
-        #statusBox { 
-            margin-top: 25px; 
-            padding: 15px 30px; 
-            border-radius: 8px; 
-            min-width: 350px; 
-            text-align: center;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
         }
         
-        .status-default { 
-            background-color: white; 
-            color: #333;
-            border: 2px solid #007bff;
+        .flip-horizontal {
+            transform: scaleX(-1);
         }
         
-        .status-success { 
-            background-color: #ffffff; 
-            color: #28a745;
-            border: 2px solid #28a745;
-            animation: pulse 0.5s ease-in-out;
-        }
-        
-        .status-error { 
-            background-color: #ffffff; 
-            color: #dc3545;
-            border: 2px solid #dc3545;
-            animation: shake 0.5s ease-in-out;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        
-        #buttonContainer {
-            margin-top: 20px;
+        #sidebar {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 320px;
+            background: #fff;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+            padding: 30px;
+            box-sizing: border-box;
+            z-index: 20;
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 20px;
         }
         
-        button {
-            background: #dc3545;
-            border: 2px solid #dc3545;
-            border-radius: 8px;
+        .sidebar-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 15px;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 12px;
             color: white;
-            padding: 12px 25px;
+            padding: 16px 24px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
             transition: all 0.3s ease;
-        }
-        
-        button:hover {
-            background: #c82333;
-            border-color: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .admin-link {
-            margin-top: 30px;
-            color: #007bff;
+            width: 100%;
+            text-align: center;
             text-decoration: none;
-            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+        }
+        
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        .action-btn.secondary:hover {
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.5);
+        }
+        
+        .status-overlay {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
             padding: 12px 24px;
             border-radius: 8px;
-            border: 2px solid #007bff;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-success {
+            background-color: rgba(76, 175, 80, 0.9);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+        }
+        
+        .status-error {
+            background-color: rgba(244, 67, 54, 0.9);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+        }
+        
+        /* Popup Modal Styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .popup-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            max-width: 90vw;
+        }
+        
+        .popup-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
             font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .popup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+        
+        .btn-register {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            font-weight: 600;
             transition: all 0.3s ease;
         }
         
-        .admin-link:hover {
-            background: #007bff;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        .btn-register:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
         }
         
-        .hidden { display: none; }
+        .hidden { 
+            display: none !important; 
+        }
     </style>
 </head>
 <body>
-    <h1>Sistema de Control de Acceso</h1>
-    <div id="videoContainer">
-        <video id="video" width="640" height="480" autoplay muted></video>
+    <div class="main-container">
+        <!-- Video Container -->
+        <div id="videoContainer">
+            <div class="video-wrapper">
+                <video id="video" class="flip-horizontal" autoplay muted></video>
+                <canvas id="overlay"></canvas>
+                <div id="statusBox" class="status-overlay">Posicione su rostro en el marco.</div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <h1 class="sidebar-title">Sistema de Control de Acceso</h1>
+            
+            <button class="action-btn" onclick="showRegisterPopup()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                </svg>
+                Registrarse como Visitante
+            </button>
+            
+            <a href="/admin.html" class="action-btn secondary">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Administración
+            </a>
+        </div>
     </div>
-    <div id="statusBox" class="status-default">Posicione su rostro en el marco.</div>
-    <div id="buttonContainer" class="hidden">
-        <button onclick="tryAgain()">Intentar de Nuevo</button>
-        <button onclick="registerAsVisitor()">Registrarse como Visitante</button>
+    
+    <!-- Visitor Registration Popup -->
+    <div id="registerPopup" class="popup-overlay">
+        <div class="popup-content">
+            <h2 class="popup-title">Registro de Visitante</h2>
+            <form id="visitorForm">
+                <div class="form-group">
+                    <label for="visitorName">Nombre completo:</label>
+                    <input type="text" id="visitorName" name="name" required placeholder="Ingrese su nombre">
+                </div>
+                <div class="form-group">
+                    <label for="visitorRut">RUT:</label>
+                    <input type="text" id="visitorRut" name="rut" required placeholder="12.345.678-9" maxlength="12">
+                    <div id="rutError" style="color: #dc3545; font-size: 12px; margin-top: 4px; display: none;">RUT inválido</div>
+                </div>
+                <div class="form-group">
+                    <label for="visitorMotive">Motivo de la visita:</label>
+                    <textarea id="visitorMotive" name="motive" rows="3" required placeholder="Describa el motivo de su visita"></textarea>
+                </div>
+                <div class="popup-buttons">
+                    <button type="button" class="btn-cancel" onclick="hideRegisterPopup()">Cancelar</button>
+                    <button type="submit" class="btn-register">Registrar</button>
+                </div>
+            </form>
+        </div>
     </div>
-    <a href="/admin.html" class="admin-link">Administración</a>
 
     <script>
         let video;
         let canvas;
+        let overlay;
         let isRecognizing = false;
         let recognitionInterval;
 
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 640, height: 480 }
+                    video: { 
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        facingMode: 'user'
+                    }
                 });
+                
                 video = document.getElementById('video');
+                overlay = document.getElementById('overlay');
                 video.srcObject = stream;
+                
+                // Set overlay dimensions to match video
+                video.onloadedmetadata = () => {
+                    overlay.width = video.videoWidth;
+                    overlay.height = video.videoHeight;
+                };
                 
                 // Start automatic recognition every 2 seconds
                 recognitionInterval = setInterval(captureAndRecognize, 2000);
@@ -173,7 +345,7 @@
         function updateStatus(message, type) {
             const statusBox = document.getElementById('statusBox');
             statusBox.textContent = message;
-            statusBox.className = `status-${type}`;
+            statusBox.className = `status-overlay ${type === 'default' ? '' : 'status-' + type}`;
         }
 
         async function captureAndRecognize() {
@@ -185,12 +357,13 @@
                 // Create canvas to capture frame
                 if (!canvas) {
                     canvas = document.createElement('canvas');
-                    canvas.width = 640;
-                    canvas.height = 480;
                 }
                 
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, 640, 480);
+                ctx.drawImage(video, 0, 0);
                 
                 // Convert to blob
                 canvas.toBlob(async (blob) => {
@@ -205,6 +378,7 @@
                         
                         const result = await response.json();
                         handleRecognitionResult(result);
+                        drawFaceDetectionOverlay(result);
                     } catch (error) {
                         console.error('Recognition error:', error);
                         updateStatus('Error de conexión. Verifique que el servidor esté funcionando.', 'error');
@@ -217,58 +391,160 @@
                 isRecognizing = false;
             }
         }
+        
+        function drawFaceDetectionOverlay(result) {
+            const ctx = overlay.getContext('2d');
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            
+            // Draw face detection rectangle using real coordinates from backend
+            if (result.status === 'success' && result.face_coords) {
+                const coords = result.face_coords;
+                
+                // Scale coordinates from backend image to overlay canvas
+                const scaleX = overlay.width / video.videoWidth;
+                const scaleY = overlay.height / video.videoHeight;
+                
+                // Mirror the X coordinate for face tracking to match the flipped video
+                const x = overlay.width - (coords.left * scaleX) - (coords.width * scaleX);
+                const y = coords.top * scaleY;
+                const faceWidth = coords.width * scaleX;
+                const faceHeight = coords.height * scaleY;
+                
+                // Set rectangle style based on recognition result - much less bright
+                if (result.result === 'Recognized') {
+                    ctx.strokeStyle = 'rgba(46, 125, 50, 0.6)'; // Much softer, muted green
+                    ctx.shadowColor = 'rgba(46, 125, 50, 0.2)';
+                } else {
+                    ctx.strokeStyle = 'rgba(183, 28, 28, 0.6)'; // Muted red for unknown
+                    ctx.shadowColor = 'rgba(183, 28, 28, 0.2)';
+                }
+                
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 5;
+                
+                // Draw main rectangle
+                ctx.strokeRect(x, y, faceWidth, faceHeight);
+                
+                // Draw subtle corner indicators
+                const cornerLength = Math.min(faceWidth, faceHeight) * 0.15; // Proportional to face size
+                ctx.lineWidth = 2;
+                
+                // Top-left corner
+                ctx.beginPath();
+                ctx.moveTo(x, y + cornerLength);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x + cornerLength, y);
+                ctx.stroke();
+                
+                // Top-right corner
+                ctx.beginPath();
+                ctx.moveTo(x + faceWidth - cornerLength, y);
+                ctx.lineTo(x + faceWidth, y);
+                ctx.lineTo(x + faceWidth, y + cornerLength);
+                ctx.stroke();
+                
+                // Bottom-left corner
+                ctx.beginPath();
+                ctx.moveTo(x, y + faceHeight - cornerLength);
+                ctx.lineTo(x, y + faceHeight);
+                ctx.lineTo(x + cornerLength, y + faceHeight);
+                ctx.stroke();
+                
+                // Bottom-right corner
+                ctx.beginPath();
+                ctx.moveTo(x + faceWidth - cornerLength, y + faceHeight);
+                ctx.lineTo(x + faceWidth, y + faceHeight);
+                ctx.lineTo(x + faceWidth, y + faceHeight - cornerLength);
+                ctx.stroke();
+                
+                // Add subtle text label
+                ctx.font = 'bold 16px Arial';
+                ctx.fillStyle = result.result === 'Recognized' ? 'rgba(46, 125, 50, 0.9)' : 'rgba(183, 28, 28, 0.9)';
+                const label = result.result === 'Recognized' ? result.name : 'Desconocido';
+                
+                // Add text background for better visibility
+                const textMetrics = ctx.measureText(label);
+                const textPadding = 8;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x - textPadding/2, y - 30, textMetrics.width + textPadding, 20);
+                
+                // Draw text
+                ctx.fillStyle = result.result === 'Recognized' ? 'rgba(129, 199, 132, 1)' : 'rgba(239, 154, 154, 1)';
+                ctx.fillText(label, x, y - 15);
+            }
+        }
 
         function handleRecognitionResult(result) {
             if (result.status === 'success') {
                 if (result.result === 'Recognized') {
                     updateStatus(`¡Bienvenido, ${result.name}! Acceso concedido.`, 'success');
-                    // You could add logic here to unlock a door, log the entry, etc.
                     setTimeout(() => {
                         updateStatus('Posicione su rostro en el marco.', 'default');
                     }, 3000);
                 } else {
-                    updateStatus('Rostro no reconocido. Intente de nuevo o regístrese como visitante.', 'error');
-                    showButtons();
+                    updateStatus('Rostro no reconocido.', 'error');
+                    // Auto-show registration popup after a delay
+                    setTimeout(() => {
+                        updateStatus('Posicione su rostro en el marco.', 'default');
+                    }, 2000);
                 }
             } else {
                 updateStatus(result.message || 'Reconocimiento fallido', 'error');
             }
         }
 
-        function showButtons() {
-            const buttonContainer = document.getElementById('buttonContainer');
-            buttonContainer.classList.remove('hidden');
+        function showRegisterPopup() {
+            document.getElementById('registerPopup').style.display = 'flex';
+        }
+
+        function hideRegisterPopup() {
+            document.getElementById('registerPopup').style.display = 'none';
+            document.getElementById('visitorForm').reset();
+        }
+
+        // Handle visitor registration form
+        document.getElementById('visitorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            // Hide buttons after 5 seconds
-            setTimeout(() => {
-                buttonContainer.classList.add('hidden');
-                updateStatus('Posicione su rostro en el marco.', 'default');
-            }, 5000);
-        }
-
-        function tryAgain() {
-            const buttonContainer = document.getElementById('buttonContainer');
-            buttonContainer.classList.add('hidden');
-            updateStatus('Posicione su rostro en el marco.', 'default');
-        }
-
-        async function registerAsVisitor() {
-            const name = prompt('Por favor ingrese su nombre:');
-            if (!name) return;
+            const name = document.getElementById('visitorName').value;
+            const rut = document.getElementById('visitorRut').value;
+            const motive = document.getElementById('visitorMotive').value;
+            
+            if (!name || !rut || !motive) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+            
+            // Validate RUT
+            if (!validateRUT(rut)) {
+                document.getElementById('rutError').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('rutError').style.display = 'none';
+            }
             
             try {
                 // Capture current frame for registration
+                if (!canvas) {
+                    canvas = document.createElement('canvas');
+                }
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, 640, 480);
+                ctx.drawImage(video, 0, 0);
                 
                 canvas.toBlob(async (blob) => {
                     try {
                         const formData = new FormData();
                         formData.append('file', blob, 'visitor.jpg');
                         formData.append('name', name);
+                        formData.append('rut', rut);
+                        formData.append('motive', motive);
                         formData.append('user_type', 'Visitant');
                         
                         updateStatus('Registrando visitante...', 'default');
+                        hideRegisterPopup();
                         
                         const response = await fetch('http://127.0.0.1:8000/register/', {
                             method: 'POST',
@@ -282,9 +558,6 @@
                         } else {
                             updateStatus(result.message || 'Registro fallido', 'error');
                         }
-                        
-                        const buttonContainer = document.getElementById('buttonContainer');
-                        buttonContainer.classList.add('hidden');
                     } catch (error) {
                         console.error('Registration error:', error);
                         updateStatus('Registro fallido. Por favor intente de nuevo.', 'error');
@@ -294,8 +567,60 @@
                 console.error('Capture error:', error);
                 updateStatus('Error al capturar la imagen para el registro.', 'error');
             }
-        }
+        });
 
+        // Close popup when clicking outside
+        document.getElementById('registerPopup').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideRegisterPopup();
+            }
+        });
+
+        // RUT validation function
+        function validateRUT(rut) {
+            // Remove dots and hyphens
+            rut = rut.replace(/\./g, '').replace('-', '');
+            
+            if (rut.length < 8 || rut.length > 9) return false;
+            
+            const body = rut.slice(0, -1);
+            const dv = rut.slice(-1).toUpperCase();
+            
+            if (!/^\d+$/.test(body)) return false;
+            
+            let sum = 0;
+            let multiplier = 2;
+            
+            for (let i = body.length - 1; i >= 0; i--) {
+                sum += parseInt(body[i]) * multiplier;
+                multiplier = multiplier === 7 ? 2 : multiplier + 1;
+            }
+            
+            const remainder = sum % 11;
+            const calculatedDV = remainder === 0 ? '0' : remainder === 1 ? 'K' : (11 - remainder).toString();
+            
+            return dv === calculatedDV;
+        }
+        
+        // Format RUT input
+        document.getElementById('visitorRut').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^0-9kK]/g, '');
+            
+            if (value.length > 1) {
+                const body = value.slice(0, -1);
+                const dv = value.slice(-1);
+                
+                // Add dots every 3 digits from right to left
+                const formattedBody = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                value = formattedBody + '-' + dv;
+            }
+            
+            e.target.value = value;
+            
+            // Hide error when user starts typing
+            document.getElementById('rutError').style.display = 'none';
+        });
+        
         // Start camera when page loads
         window.addEventListener('load', startCamera);
     </script>

@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM docker.io/library/nginx:alpine
 
 # Copy the frontend files to the nginx html directory
 COPY index.html /usr/share/nginx/html/index.html

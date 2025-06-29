@@ -61,6 +61,8 @@ def load_known_faces_from_db():
 async def register(
     name: str = Body(...),
     user_type: str = Body("Authorized"),
+    rut: str = Body(None),
+    motive: str = Body(None),
     file: UploadFile = File(...)
 ):
     """Registers a new person (Authorized or Visitant) in the database."""
@@ -80,6 +82,12 @@ async def register(
         "face_embeddings": [embedding]
     }
     
+    # Add RUT and motive if provided (for visitors)
+    if rut:
+        person_doc["rut"] = rut
+    if motive:
+        person_doc["motive"] = motive
+    
     people_collection.insert_one(person_doc)
     return {"status": "success", "message": f"{user_type} '{name}' registrado."}
 
@@ -93,12 +101,18 @@ async def recognize(file: UploadFile = File(...)):
         
     contents = await file.read()
     unknown_image = face_recognition.load_image_file(io.BytesIO(contents))
-    unknown_encodings = face_recognition.face_encodings(unknown_image)
+    
+    # Get face locations and encodings
+    face_locations = face_recognition.face_locations(unknown_image)
+    unknown_encodings = face_recognition.face_encodings(unknown_image, face_locations)
 
-    if not unknown_encodings:
-        return {"status": "success", "result": "Unknown", "name": "No se detectó rostro"}
+    if not unknown_encodings or not face_locations:
+        return {"status": "success", "result": "Unknown", "message": "No se detectó rostro"}
 
+    # Use the first detected face
     unknown_encoding = unknown_encodings[0]
+    face_location = face_locations[0]  # (top, right, bottom, left)
+    
     matches = face_recognition.compare_faces(known_encodings, unknown_encoding, tolerance=0.6)
     name = "Unknown"
 
@@ -108,10 +122,30 @@ async def recognize(file: UploadFile = File(...)):
         if matches[best_match_index]:
             name = known_names[best_match_index]
     
+    # Convert face location to coordinates (top, right, bottom, left)
+    top, right, bottom, left = face_location
+    face_coords = {
+        "top": int(top),
+        "right": int(right), 
+        "bottom": int(bottom),
+        "left": int(left),
+        "width": int(right - left),
+        "height": int(bottom - top)
+    }
+    
     if name == "Unknown":
-        return {"status": "success", "result": "Unknown"}
+        return {
+            "status": "success", 
+            "result": "Unknown",
+            "face_coords": face_coords
+        }
     else:
-        return {"status": "success", "result": "Recognized", "name": name}
+        return {
+            "status": "success", 
+            "result": "Recognized", 
+            "name": name,
+            "face_coords": face_coords
+        }
 
 @app.post("/admin/login/")
 async def admin_login(
@@ -131,13 +165,21 @@ async def get_all_users():
     """Get list of all registered users."""
     users = []
     for person in people_collection.find():
-        users.append({
+        user_data = {
             "id": str(person["_id"]),
             "name": person["name"],
             "user_type": person["user_type"],
             "created_at": person["created_at"].isoformat(),
             "face_count": len(person.get("face_embeddings", []))
-        })
+        }
+        
+        # Add RUT and motive for visitors
+        if person.get("rut"):
+            user_data["rut"] = person["rut"]
+        if person.get("motive"):
+            user_data["motive"] = person["motive"]
+            
+        users.append(user_data)
     return {"status": "success", "users": users}
 
 @app.delete("/admin/users/{user_id}")
