@@ -26,9 +26,16 @@ A facial recognition-based entry control system with camera capture, user manage
    cd entry-control-system
    ```
 
-2. **Deploy with one command**:
+2. **Deploy with one command** (choose one option):
+   
+   **Option A - Full deployment with Service (recommended)**:
    ```bash
    podman play kube entry-control-system.yaml
+   ```
+   
+   **Option B - Simple pod-only deployment**:
+   ```bash
+   podman play kube entry-control-pod.yaml
    ```
 
 3. **Access the application**:
