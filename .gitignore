@@ -34,3 +34,8 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+*.tmp
+*.bak
+*.backup
+*.orig
+*.rej
