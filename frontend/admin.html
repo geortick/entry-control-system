@@ -4,751 +4,623 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración - Control de Acceso</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        /* Custom styles to complement Tailwind */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
         }
 
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8; /* slate-400 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
         }
 
-        .login-container {
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        /* Hide number input spinners */
+        input[type='number']::-webkit-inner-spin-button,
+        input[type='number']::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
-
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        input[type='number'] {
+            -moz-appearance: textfield;
         }
-
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            font-size: 16px;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
+        
+        /* Custom class for active tab/nav item */
+        .nav-item.active {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #0f172a; /* slate-900 */
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .tab-button {
-            padding: 12px 24px;
-            border: none;
-            background: transparent;
-            border-bottom: 3px solid transparent;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #64748b;
-        }
-
-        .tab-button.active {
-            color: #4CAF50;
-            border-bottom-color: #4CAF50;
-        }
-
-        .user-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            border: 1px solid #f1f5f9;
-            transition: all 0.3s ease;
-        }
-
-        .user-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-        }
-
-        .badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .badge-authorized {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-
-        .badge-visitor {
-            background: #fff3e0;
-            color: #ef6c00;
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-
-        .alert-success {
-            background: #e8f5e8;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
-        }
-
-        .alert-error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .grid-responsive {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-        }
-
-        .logout-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-        }
     </style>
-    <script src="env-config.js"></script>
+    <script src="config.js"></script>
 </head>
-<body>
-    <!-- Login Screen -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
-        <div class="login-container glass-effect">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Panel de Administración</h1>
-                <p class="text-gray-600">Sistema de Control de Acceso</p>
+<body class="text-slate-800">
+
+    <!-- Global Alert Container -->
+    <div id="alertContainer" class="fixed top-5 right-5 z-50 w-full max-w-sm"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <h3 id="modalTitle" class="text-lg font-bold text-slate-900">Confirmar Acción</h3>
+            <p id="modalMessage" class="mt-2 text-sm text-slate-600">¿Estás seguro de que quieres continuar?</p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="modalCancelBtn" class="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-300">Cancelar</button>
+                <button id="modalConfirmBtn" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700">Confirmar</button>
             </div>
-            
-            <form id="loginForm">
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Usuario</label>
-                    <input type="text" id="username" class="form-input" placeholder="Ingrese su usuario" required>
-                </div>
-                
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
-                    <input type="password" id="password" class="form-input" placeholder="Ingrese su contraseña" required>
-                </div>
-                
-                <button type="submit" class="btn-primary w-full">
-                    Iniciar Sesión
-                </button>
-            </form>
-            
-            <div id="loginMessage" class="mt-4 hidden"></div>
-            
-            <div class="mt-8 text-center">
-                <a href="/" class="text-blue-600 hover:text-blue-800 font-medium">
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="flex min-h-screen items-center justify-center bg-slate-100 p-4">
+        <div class="w-full max-w-sm">
+            <div class="text-center mb-6">
+                 <h1 class="text-3xl font-bold text-slate-900">Panel de Administración</h1>
+                 <p class="text-slate-600 mt-1">Sistema de Control de Acceso</p>
+            </div>
+            <div class="rounded-2xl bg-white p-8 shadow-lg">
+                <form id="loginForm">
+                    <div class="space-y-5">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-slate-700">Usuario</label>
+                            <input type="text" id="username" class="mt-1 block w-full rounded-md border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="su-usuario" required>
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-slate-700">Contraseña</label>
+                            <input type="password" id="password" class="mt-1 block w-full rounded-md border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="mt-8 w-full rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                        Iniciar Sesión
+                    </button>
+                </form>
+            </div>
+            <div class="mt-6 text-center space-y-2">
+                <a href="/" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                     ← Volver al Control de Acceso
                 </a>
+                <div>
+                    <button id="bypassLoginBtn" class="text-xs font-medium text-slate-500 hover:text-slate-700 underline">
+                        Bypass Login (Modo de prueba)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Dashboard Screen -->
-    <div id="dashboardScreen" class="hidden min-h-screen px-4 py-8">
-        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
-        
-        <div class="dashboard-container glass-effect">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Panel de Administración</h1>
-                <p class="text-gray-600">Gestión de Usuarios y Visitantes</p>
-            </div>
-            
-            <!-- Navigation Tabs -->
-            <div class="flex justify-center mb-8 border-b">
-                <button class="tab-button active" onclick="showTab('users')">
-                    👥 Todos los Usuarios
-                </button>
-                <button class="tab-button" onclick="showTab('visitors')">
-                    🏃 Visitantes
-                </button>
-                <button class="tab-button" onclick="showTab('authorized')">
-                    ✅ Usuarios Autorizados
-                </button>
-                <button class="tab-button" onclick="showTab('register')">
-                    ➕ Registrar Usuario
-                </button>
-            </div>
-            
-            <!-- Alert Messages -->
-            <div id="alertContainer"></div>
-            
-            <!-- Users Tab -->
-            <div id="usersTab" class="tab-content">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Todos los Usuarios</h2>
-                <div id="usersGrid" class="grid-responsive"></div>
-            </div>
-            
-            <!-- Visitors Tab -->
-            <div id="visitorsTab" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Visitantes Registrados</h2>
-                <div id="visitorsGrid" class="grid-responsive"></div>
-            </div>
-            
-            <!-- Authorized Tab -->
-            <div id="authorizedTab" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Usuarios Autorizados</h2>
-                <div id="authorizedGrid" class="grid-responsive"></div>
-            </div>
-            
-            <!-- Register Tab -->
-            <div id="registerTab" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Registrar Nuevo Usuario</h2>
-                
-                <div class="max-w-2xl mx-auto">
-                    <form id="registerForm" class="bg-white p-8 rounded-2xl shadow-lg">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre Completo</label>
-                                <input type="text" id="regName" class="form-input" placeholder="Ingrese el nombre" required>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Usuario</label>
-                                <select id="regUserType" class="form-input" onchange="toggleVisitorFields()">
-                                    <option value="Authorized">Usuario Autorizado</option>
-                                    <option value="Visitant">Visitante</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Common RUT field for all users -->
-                        <div class="mt-6">
+    <div id="dashboardScreen" class="hidden">
+        <div class="flex h-screen bg-slate-100">
+            <!-- Sidebar -->
+            <nav class="flex w-64 flex-col bg-white shadow-lg">
+                <div class="p-4 text-center border-b">
+                    <h2 class="text-xl font-bold text-indigo-600">Admin</h2>
+                </div>
+                <div class="flex-1 p-4 space-y-2">
+                    <a href="#" class="nav-item group flex items-center rounded-lg px-3 py-2 text-slate-700 transition hover:bg-slate-200 active" onclick="showTab('users', event)">
+                        <svg class="h-5 w-5 mr-3 text-slate-500 group-hover:text-slate-700" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Todos los Usuarios
+                    </a>
+                    <a href="#" class="nav-item group flex items-center rounded-lg px-3 py-2 text-slate-700 transition hover:bg-slate-200" onclick="showTab('visitors', event)">
+                         <svg class="h-5 w-5 mr-3 text-slate-500 group-hover:text-slate-700" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c-4.42 0-8-3.58-8-8a8 8 0 0 1 16 0c0 4.42-3.58 8-8 8Z"/><path d="M12 12v-4"/><path d="M12 16h.01"/></svg>
+                        Visitantes
+                    </a>
+                    <a href="#" class="nav-item group flex items-center rounded-lg px-3 py-2 text-slate-700 transition hover:bg-slate-200" onclick="showTab('authorized', event)">
+                        <svg class="h-5 w-5 mr-3 text-slate-500 group-hover:text-slate-700" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        Autorizados
+                    </a>
+                    <a href="#" class="nav-item group flex items-center rounded-lg px-3 py-2 text-slate-700 transition hover:bg-slate-200" onclick="showTab('register', event)">
+                        <svg class="h-5 w-5 mr-3 text-slate-500 group-hover:text-slate-700" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Registrar Usuario
+                    </a>
+                </div>
+                <div class="p-4 border-t">
+                    <button onclick="logout()" class="w-full group flex items-center rounded-lg px-3 py-2 text-slate-700 transition hover:bg-red-100 hover:text-red-700">
+                        <svg class="h-5 w-5 mr-3 text-slate-500 group-hover:text-red-700" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto p-8">
+                <div id="usersTab" class="tab-content">
+                    <h1 class="text-3xl font-bold text-slate-900 mb-6">Todos los Usuarios</h1>
+                    <div id="usersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+                </div>
+
+                <div id="visitorsTab" class="tab-content hidden">
+                    <h1 class="text-3xl font-bold text-slate-900 mb-6">Visitantes Registrados</h1>
+                    <div id="visitorsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+                </div>
+
+                <div id="authorizedTab" class="tab-content hidden">
+                    <h1 class="text-3xl font-bold text-slate-900 mb-6">Usuarios Autorizados</h1>
+                    <div id="authorizedGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+                </div>
+
+                <div id="registerTab" class="tab-content hidden">
+                    <h1 class="text-3xl font-bold text-slate-900 mb-6">Registrar Nuevo Usuario</h1>
+                    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
+                        <form id="registerForm">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">RUT (Opcional)</label>
-                                    <input type="text" id="regRut" class="form-input" placeholder="12.345.678-9" maxlength="12">
+                                    <label class="block text-sm font-medium text-slate-700">Nombre Completo</label>
+                                    <input type="text" id="regName" class="mt-1 block w-full rounded-md border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ej: Juan Pérez" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">Tipo de Usuario</label>
+                                    <select id="regUserType" class="mt-1 block w-full rounded-md border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" onchange="toggleVisitorFields()">
+                                        <option value="Authorized">Usuario Autorizado</option>
+                                        <option value="Visitant">Visitante</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">RUT (Opcional)</label>
+                                    <input type="text" id="regRut" class="mt-1 block w-full rounded-md border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="12.345.678-9" maxlength="12">
                                     <div id="regRutError" class="text-red-500 text-sm mt-1 hidden">RUT inválido</div>
                                 </div>
-                                
-                                <!-- Visitor specific field -->
                                 <div id="visitorMotiveField" class="hidden">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Motivo de Visita</label>
-                                    <input type="text" id="regMotive" class="form-input" placeholder="Descripción del motivo">
+                                    <label class="block text-sm font-medium text-slate-700">Motivo de Visita</label>
+                                    <input type="text" id="regMotive" class="mt-1 block w-full rounded-md border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Descripción del motivo">
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="mt-6">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Fotografía</label>
-                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
-                                <!-- Camera Section -->
-                                <div id="cameraSection">
-                                    <video id="adminVideo" width="320" height="240" autoplay muted class="mx-auto rounded-lg mb-4 hidden"></video>
-                                    <canvas id="adminCanvas" width="320" height="240" class="hidden"></canvas>
-                                    <div id="photoPreview" class="hidden mb-4">
-                                        <img id="capturedPhoto" width="320" height="240" class="mx-auto rounded-lg">
+
+                            <div class="mt-6 pt-6 border-t">
+                                 <label class="block text-sm font-medium text-slate-700">Fotografía</label>
+                                 <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                    <!-- Camera Section -->
+                                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center">
+                                        <div id="cameraContainer" class="relative w-full aspect-[4/3] mx-auto bg-slate-200 rounded-lg flex items-center justify-center">
+                                            <video id="adminVideo" autoplay muted playsinline class="w-full h-full object-cover rounded-lg hidden"></video>
+                                            <canvas id="adminCanvas" class="hidden"></canvas>
+                                            <img id="capturedPhoto" class="w-full h-full object-cover rounded-lg hidden">
+                                            <div id="cameraPlaceholder" class="text-slate-500">
+                                                <svg class="mx-auto h-12 w-12" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="4"/></svg>
+                                                <p class="mt-2 text-sm">Vista previa de la cámara</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 space-x-2">
+                                            <button type="button" id="startCameraBtn" class="rounded-lg bg-slate-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700" onclick="startCamera()">Iniciar Cámara</button>
+                                            <button type="button" id="captureBtn" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 hidden" onclick="capturePhoto()">Capturar</button>
+                                            <button type="button" id="retakeBtn" class="rounded-lg bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 hidden" onclick="retakePhoto()">Tomar Otra</button>
+                                        </div>
                                     </div>
-                                    <div class="space-x-4">
-                                        <button type="button" id="startCameraBtn" class="btn-secondary" onclick="startCamera()">
-                                            📷 Iniciar Cámara
-                                        </button>
-                                        <button type="button" id="captureBtn" class="btn-primary hidden" onclick="capturePhoto()">
-                                            📸 Capturar Foto
-                                        </button>
-                                        <button type="button" id="retakeBtn" class="btn-secondary hidden" onclick="retakePhoto()">
-                                            🔄 Tomar Otra
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- File Upload Section -->
-                                <div class="mt-4 pt-4 border-t border-gray-200">
-                                    <p class="text-gray-600 mb-2">O subir archivo:</p>
-                                    <input type="file" id="regPhoto" accept="image/*" class="form-input">
-                                </div>
+                                    <!-- File Upload Section -->
+                                    <div class="flex items-center justify-center w-full">
+                                        <label for="regPhoto" class="flex flex-col items-center justify-center w-full h-full border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <svg class="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
+                                                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">O haz clic para subir</span></p>
+                                                <p class="text-xs text-gray-500">PNG, JPG, etc.</p>
+                                            </div>
+                                            <input id="regPhoto" type="file" class="hidden" accept="image/*"/>
+                                        </label>
+                                    </div> 
+                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="mt-8 text-center">
-                            <button type="submit" class="btn-primary px-8 py-3">
-                                ✅ Registrar Usuario
-                            </button>
-                        </div>
-                    </form>
+                            
+                            <div class="mt-8 text-right">
+                                <button type="submit" class="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">
+                                    Registrar Usuario
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
 
-    <script>
-        let isLoggedIn = false;
+    <script type="text/javascript">
+        // --- STATE MANAGEMENT ---
         let adminStream = null;
         let capturedBlob = null;
+        let confirmAction = null;
 
-        // Login functionality
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        // --- DOM ELEMENTS ---
+        const loginScreen = document.getElementById('loginScreen');
+        const dashboardScreen = document.getElementById('dashboardScreen');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const alertContainer = document.getElementById('alertContainer');
+        const confirmationModal = document.getElementById('confirmationModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const regRutInput = document.getElementById('regRut');
+        
+        // --- API ENDPOINTS ---
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
+        // --- CORE LOGIC ---
+
+        // Handle bypass login button for testing
+        document.getElementById('bypassLoginBtn').addEventListener('click', () => {
+            showAlert('Omitiendo inicio de sesión para pruebas.', 'info');
+            setTimeout(() => {
+                loginScreen.classList.add('hidden');
+                dashboardScreen.classList.remove('hidden');
+                loadDataForCurrentTab();
+            }, 500);
+        });
+
+        // Handle login form submission
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            
+
             try {
-                const response = await fetch('http://127.0.0.1:8000/admin/login/', {
+                const response = await fetch(`${API_BASE_URL}/admin/login/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
-                
+
                 if (response.ok) {
-                    isLoggedIn = true;
                     showAlert('¡Inicio de sesión exitoso!', 'success');
                     setTimeout(() => {
-                        document.getElementById('loginScreen').classList.add('hidden');
-                        document.getElementById('dashboardScreen').classList.remove('hidden');
-                        loadAllUsers();
+                        loginScreen.classList.add('hidden');
+                        dashboardScreen.classList.remove('hidden');
+                        loadDataForCurrentTab();
                     }, 1000);
                 } else {
                     showAlert('Usuario o contraseña incorrectos', 'error');
                 }
             } catch (error) {
+                console.error('Login Error:', error);
                 showAlert('Error de conexión. Intente nuevamente.', 'error');
             }
         });
 
-        // Logout functionality
+        // Handle user registration form submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('regName').value;
+            const userType = document.getElementById('regUserType').value;
+            const rut = regRutInput.value;
+            const motive = document.getElementById('regMotive').value;
+            const photoFile = document.getElementById('regPhoto').files[0];
+
+            if (rut && !validateRUT(rut)) {
+                document.getElementById('regRutError').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('regRutError').classList.add('hidden');
+
+            if (!capturedBlob && !photoFile) {
+                showAlert('Debe capturar una foto o subir un archivo.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('user_type', userType);
+            if (rut) formData.append('rut', rut);
+            if (userType === 'Visitant' && motive) {
+                formData.append('motive', motive);
+            }
+            if (capturedBlob) {
+                formData.append('file', capturedBlob, 'captured.jpg');
+            } else if (photoFile) {
+                formData.append('file', photoFile);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/register/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    showAlert(result.message || 'Usuario registrado exitosamente.', 'success');
+                    resetRegistrationForm();
+                    showTab('users', { currentTarget: document.querySelector('.nav-item') }); // Switch to users tab
+                } else {
+                    showAlert(result.message || 'Error al registrar usuario.', 'error');
+                }
+            } catch (error) {
+                console.error('Registration Error:', error);
+                showAlert('Error de conexión al registrar.', 'error');
+            }
+        });
+
+        // --- UI & NAVIGATION ---
+
         function logout() {
-            isLoggedIn = false;
-            document.getElementById('dashboardScreen').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('loginForm').reset();
+            dashboardScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            loginForm.reset();
             stopCamera();
         }
 
-        // Tab functionality
-        function showTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden');
-            });
+        function showTab(tabName, event) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
             
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.getElementById(`${tabName}Tab`).classList.remove('hidden');
+            if (event) event.currentTarget.classList.add('active');
+
+            loadDataForCurrentTab();
+        }
+        
+        function loadDataForCurrentTab() {
+            const activeTab = document.querySelector('.nav-item.active');
+            if (!activeTab) return;
             
-            // Show selected tab
-            document.getElementById(tabName + 'Tab').classList.remove('hidden');
-            event.target.classList.add('active');
-            
-            // Load data based on tab
-            if (tabName === 'users') {
-                loadAllUsers();
-            } else if (tabName === 'visitors') {
-                loadVisitors();
-            } else if (tabName === 'authorized') {
-                loadAuthorized();
+            if (activeTab.textContent.includes('Todos')) loadAllUsers();
+            else if (activeTab.textContent.includes('Visitantes')) loadVisitors();
+            else if (activeTab.textContent.includes('Autorizados')) loadAuthorized();
+        }
+
+        function resetRegistrationForm() {
+            registerForm.reset();
+            document.getElementById('visitorMotiveField').classList.add('hidden');
+            document.getElementById('photoPreview').classList.add('hidden');
+            document.getElementById('cameraPlaceholder').classList.remove('hidden');
+            stopCamera();
+            capturedBlob = null;
+        }
+
+        // --- DATA FETCHING & DISPLAY ---
+
+        async function fetchUsers() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/users/`);
+                if (!response.ok) throw new Error('Failed to fetch users');
+                const result = await response.json();
+                return result.status === 'success' ? result.users : [];
+            } catch (error) {
+                console.error('Fetch Users Error:', error);
+                showAlert('Error al cargar la lista de usuarios.', 'error');
+                return [];
             }
         }
 
-        // Load all users
         async function loadAllUsers() {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/admin/users/');
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    displayUsers(result.users, 'usersGrid');
-                }
-            } catch (error) {
-                showAlert('Error al cargar usuarios', 'error');
-            }
+            const users = await fetchUsers();
+            displayUsers(users, 'usersGrid');
         }
 
-        // Load visitors only
         async function loadVisitors() {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/admin/users/');
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    const visitors = result.users.filter(user => user.user_type === 'Visitant');
-                    displayUsers(visitors, 'visitorsGrid');
-                }
-            } catch (error) {
-                showAlert('Error al cargar visitantes', 'error');
-            }
+            const users = await fetchUsers();
+            const visitors = users.filter(user => user.user_type === 'Visitant');
+            displayUsers(visitors, 'visitorsGrid');
         }
 
-        // Load authorized users only
         async function loadAuthorized() {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/admin/users/');
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    const authorized = result.users.filter(user => user.user_type === 'Authorized');
-                    displayUsers(authorized, 'authorizedGrid');
-                }
-            } catch (error) {
-                showAlert('Error al cargar usuarios autorizados', 'error');
-            }
+            const users = await fetchUsers();
+            const authorized = users.filter(user => user.user_type === 'Authorized');
+            displayUsers(authorized, 'authorizedGrid');
         }
 
-        // Display users in grid
         function displayUsers(users, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
-            
+
             if (users.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-12">No hay usuarios registrados</div>';
+                container.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12">
+                    <svg class="mx-auto h-12 w-12 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 16.318A4.486 4.486 0 0 0 12.016 15a4.486 4.486 0 0 0-3.198 1.318M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75s.168-.75.375-.75.375.336.375.75Zm4.5 0c0 .414-.168.75-.375.75s-.375-.414-.375-.75.168-.75.375-.75.375.336.375.75Z" /></svg>
+                    <p class="mt-4">No se encontraron usuarios.</p>
+                </div>`;
                 return;
             }
-            
+
             users.forEach(user => {
-                const userCard = document.createElement('div');
-                userCard.className = 'user-card';
-                
-                const badgeClass = user.user_type === 'Authorized' ? 'badge-authorized' : 'badge-visitor';
+                const badgeClass = user.user_type === 'Authorized' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-amber-100 text-amber-800';
                 const isVisitor = user.user_type === 'Visitant';
-                
+
+                const userCard = document.createElement('div');
+                userCard.className = 'flex flex-col rounded-xl bg-white p-4 shadow-md transition hover:shadow-lg';
                 userCard.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-800">${user.name}</h3>
-                            <span class="badge ${badgeClass}">${user.user_type}</span>
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-bold text-slate-800">${user.name}</h3>
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full ${badgeClass}">${user.user_type}</span>
                         </div>
-                        <button class="btn-danger" onclick="deleteUser('${user.id}', '${user.name}')">
-                            🗑️ Eliminar
-                        </button>
+                        <div class="mt-2 space-y-1 text-sm text-slate-600">
+                            ${user.rut ? `<div><strong>RUT:</strong> ${user.rut}</div>` : ''}
+                            ${isVisitor && user.motive ? `<div class="truncate"><strong>Motivo:</strong> ${user.motive}</div>` : ''}
+                        </div>
                     </div>
-                    
-                    <div class="space-y-2 text-sm text-gray-600">
-                        ${user.rut ? `<div><strong>RUT:</strong> ${user.rut}</div>` : ''}
-                        ${isVisitor && user.motive ? `<div><strong>Motivo:</strong> ${user.motive}</div>` : ''}
-                    </div>
-                    
-                    <div class="mt-4 text-xs text-gray-500">
-                        Registrado: ${new Date(user.created_at).toLocaleString('es-ES')}
+                    <div class="mt-4 pt-3 border-t flex items-center justify-between">
+                         <p class="text-xs text-slate-500">ID: ${user.id}</p>
+                         <button class="p-1.5 rounded-md text-slate-500 transition hover:bg-red-100 hover:text-red-600" onclick="showDeleteModal('${user.id}', '${user.name}')">
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                         </button>
                     </div>
                 `;
-                
                 container.appendChild(userCard);
             });
         }
 
-        // Delete user
-        async function deleteUser(userId, userName) {
-            if (!confirm(`¿Está seguro de que desea eliminar a "${userName}"?`)) return;
-            
+        async function performDeleteUser(userId, userName) {
             try {
-                const response = await fetch(`http://127.0.0.1:8000/admin/users/${userId}`, {
-                    method: 'DELETE'
-                });
-                
+                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, { method: 'DELETE' });
                 if (response.ok) {
-                    showAlert(`Usuario "${userName}" eliminado exitosamente`, 'success');
-                    loadAllUsers(); // Refresh current view
+                    showAlert(`Usuario "${userName}" eliminado exitosamente.`, 'success');
+                    loadDataForCurrentTab();
                 } else {
-                    showAlert('Error al eliminar usuario', 'error');
+                    showAlert('Error al eliminar usuario.', 'error');
                 }
             } catch (error) {
-                showAlert('Error al eliminar usuario', 'error');
+                console.error('Delete User Error:', error);
+                showAlert('Error de conexión al eliminar.', 'error');
             }
         }
 
-        // Toggle visitor fields
-        function toggleVisitorFields() {
-            const userType = document.getElementById('regUserType').value;
-            const motiveField = document.getElementById('visitorMotiveField');
-            
-            if (userType === 'Visitant') {
-                motiveField.classList.remove('hidden');
-            } else {
-                motiveField.classList.add('hidden');
-            }
-        }
+        // --- CAMERA & MEDIA ---
 
-        // Camera functionality
         async function startCamera() {
             try {
-                adminStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 320, height: 240 }
-                });
-                
+                adminStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
                 const video = document.getElementById('adminVideo');
                 video.srcObject = adminStream;
                 video.classList.remove('hidden');
                 
+                document.getElementById('cameraPlaceholder').classList.add('hidden');
+                document.getElementById('capturedPhoto').classList.add('hidden');
                 document.getElementById('startCameraBtn').classList.add('hidden');
                 document.getElementById('captureBtn').classList.remove('hidden');
-                
-                showAlert('Cámara iniciada correctamente', 'success');
             } catch (error) {
-                showAlert('Error al acceder a la cámara', 'error');
+                console.error('Camera Error:', error);
+                showAlert('Error al acceder a la cámara.', 'error');
             }
         }
 
         function capturePhoto() {
             const video = document.getElementById('adminVideo');
             const canvas = document.getElementById('adminCanvas');
+            canvas.width = 320;
+            canvas.height = 240;
             const ctx = canvas.getContext('2d');
-            
             ctx.drawImage(video, 0, 0, 320, 240);
-            
+
             canvas.toBlob((blob) => {
                 capturedBlob = blob;
-                
-                const preview = document.getElementById('photoPreview');
                 const img = document.getElementById('capturedPhoto');
                 img.src = URL.createObjectURL(blob);
-                preview.classList.remove('hidden');
+                img.classList.remove('hidden');
                 
                 document.getElementById('captureBtn').classList.add('hidden');
                 document.getElementById('retakeBtn').classList.remove('hidden');
-                
-                stopCamera();
-                showAlert('Foto capturada exitosamente', 'success');
-            }, 'image/jpeg', 0.8);
+                stopCamera(false); // Stop stream but keep video element visible
+            }, 'image/jpeg', 0.9);
         }
 
         function retakePhoto() {
-            document.getElementById('photoPreview').classList.add('hidden');
+            document.getElementById('capturedPhoto').classList.add('hidden');
             document.getElementById('retakeBtn').classList.add('hidden');
             capturedBlob = null;
             startCamera();
         }
 
-        function stopCamera() {
+        function stopCamera(hideVideo = true) {
             if (adminStream) {
                 adminStream.getTracks().forEach(track => track.stop());
                 adminStream = null;
-                
-                const video = document.getElementById('adminVideo');
+            }
+            const video = document.getElementById('adminVideo');
+            if (hideVideo) {
                 video.classList.add('hidden');
                 video.srcObject = null;
-                
-                document.getElementById('startCameraBtn').classList.remove('hidden');
-                document.getElementById('captureBtn').classList.add('hidden');
+                document.getElementById('cameraPlaceholder').classList.remove('hidden');
             }
+            document.getElementById('startCameraBtn').classList.remove('hidden');
+            document.getElementById('captureBtn').classList.add('hidden');
         }
-
-        // Register user form
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('regName').value;
-            const userType = document.getElementById('regUserType').value;
-            const rut = document.getElementById('regRut').value;
-            const motive = document.getElementById('regMotive').value;
-            const photoFile = document.getElementById('regPhoto').files[0];
-            
-            // Validation
-            if (userType === 'Visitant' && rut && !validateRUT(rut)) {
-                document.getElementById('regRutError').classList.remove('hidden');
-                return;
-            } else {
-                document.getElementById('regRutError').classList.add('hidden');
-            }
-            
-            if (!capturedBlob && !photoFile) {
-                showAlert('Debe capturar una foto o subir un archivo', 'error');
-                return;
-            }
-            
-            // Prepare form data
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('user_type', userType);
-            
-            // Add RUT for all users if provided
-            if (rut) formData.append('rut', rut);
-            
-            // Add motive only for visitors
-            if (userType === 'Visitant' && motive) {
-                formData.append('motive', motive);
-            }
-            
-            if (capturedBlob) {
-                formData.append('file', capturedBlob, 'captured.jpg');
-            } else {
-                formData.append('file', photoFile);
-            }
-            
-            try {
-                const response = await fetch('http://127.0.0.1:8000/register/', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    showAlert(result.message, 'success');
-                    document.getElementById('registerForm').reset();
-                    document.getElementById('visitorMotiveField').classList.add('hidden');
-                    document.getElementById('photoPreview').classList.add('hidden');
-                    stopCamera();
-                    capturedBlob = null;
-                    loadAllUsers();
-                } else {
-                    showAlert(result.message || 'Error al registrar usuario', 'error');
-                }
-            } catch (error) {
-                showAlert('Error de conexión', 'error');
+        
+        document.getElementById('regPhoto').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                stopCamera();
+                capturedBlob = null; // Prioritize file upload over captured photo
+                const img = document.getElementById('capturedPhoto');
+                img.src = URL.createObjectURL(file);
+                img.classList.remove('hidden');
+                document.getElementById('cameraPlaceholder').classList.add('hidden');
+                showAlert('Archivo de imagen seleccionado.', 'info');
             }
         });
 
-        // RUT validation
-        function validateRUT(rut) {
-            rut = rut.replace(/\./g, '').replace('-', '');
-            if (rut.length < 8 || rut.length > 9) return false;
-            
-            const body = rut.slice(0, -1);
-            const dv = rut.slice(-1).toUpperCase();
-            
-            if (!/^\d+$/.test(body)) return false;
-            
-            let sum = 0;
-            let multiplier = 2;
-            
-            for (let i = body.length - 1; i >= 0; i--) {
-                sum += parseInt(body[i]) * multiplier;
-                multiplier = multiplier === 7 ? 2 : multiplier + 1;
-            }
-            
-            const remainder = sum % 11;
-            const calculatedDV = remainder === 0 ? '0' : remainder === 1 ? 'K' : (11 - remainder).toString();
-            
-            return dv === calculatedDV;
+        // --- UTILITY FUNCTIONS ---
+
+        function toggleVisitorFields() {
+            const userType = document.getElementById('regUserType').value;
+            document.getElementById('visitorMotiveField').classList.toggle('hidden', userType !== 'Visitant');
         }
 
-        // Format RUT input
-        document.getElementById('regRut').addEventListener('input', function(e) {
+        function showAlert(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-100 border-green-400 text-green-700',
+                error: 'bg-red-100 border-red-400 text-red-700',
+                info: 'bg-blue-100 border-blue-400 text-blue-700'
+            };
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `p-4 mb-4 text-sm border rounded-lg ${colors[type]}`
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = `<span class="font-medium">${message}</span>`;
+            
+            alertContainer.appendChild(alertDiv);
+
+            setTimeout(() => {
+                alertDiv.style.transition = 'opacity 0.5s ease';
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 500);
+            }, 5000);
+        }
+
+        function showDeleteModal(userId, userName) {
+            modalTitle.textContent = `Eliminar a ${userName}`;
+            modalMessage.innerHTML = `¿Estás seguro de que deseas eliminar permanentemente a <strong>${userName}</strong>? Esta acción no se puede deshacer.`;
+            confirmationModal.classList.remove('hidden');
+            confirmationModal.classList.add('flex');
+            
+            // Clone and replace the button to remove old event listeners
+            const newConfirmBtn = modalConfirmBtn.cloneNode(true);
+            modalConfirmBtn.parentNode.replaceChild(newConfirmBtn, modalConfirmBtn);
+            
+            newConfirmBtn.onclick = () => {
+                performDeleteUser(userId, userName);
+                hideModal();
+            };
+        }
+
+        function hideModal() {
+            confirmationModal.classList.add('hidden');
+            confirmationModal.classList.remove('flex');
+        }
+        
+        modalCancelBtn.addEventListener('click', hideModal);
+
+        // RUT validation and formatting
+        function validateRUT(rut) {
+            rut = rut.replace(/\./g, '').replace('-', '');
+            if (!/^[0-9]+[0-9kK]{1}$/.test(rut)) return false;
+            const t = parseInt(rut.slice(0, -1), 10);
+            const m = 0;
+            let s = 1;
+            for (; t; s = (s + t % 10 * (9 - m++ % 6)) % 11);
+            return (s ? s - 1 : 'k').toString() === rut.slice(-1).toLowerCase();
+        }
+
+        regRutInput.addEventListener('input', (e) => {
             let value = e.target.value.replace(/[^0-9kK]/g, '');
-            
-            if (value.length > 1) {
-                const body = value.slice(0, -1);
-                const dv = value.slice(-1);
-                const formattedBody = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                value = formattedBody + '-' + dv;
-            }
-            
-            e.target.value = value;
+            value = value.slice(0, 9);
+            let body = value.slice(0, -1);
+            let dv = value.slice(-1);
+            body = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            e.target.value = body ? `${body}-${dv}` : value;
             document.getElementById('regRutError').classList.add('hidden');
         });
 
-        // Show alert messages
-        function showAlert(message, type) {
-            const container = document.getElementById('alertContainer');
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.textContent = message;
-            
-            container.innerHTML = '';
-            container.appendChild(alertDiv);
-            
-            if (type === 'success') {
-                setTimeout(() => {
-                    alertDiv.remove();
-                }, 5000);
-            }
-        }
-
-        // Show login alert
-        function showAlert(message, type) {
-            const loginMessage = document.getElementById('loginMessage');
-            if (loginMessage) {
-                loginMessage.className = `alert alert-${type}`;
-                loginMessage.textContent = message;
-                loginMessage.classList.remove('hidden');
-                
-                if (type === 'success') {
-                    setTimeout(() => {
-                        loginMessage.classList.add('hidden');
-                    }, 3000);
-                }
-            } else {
-                // For dashboard alerts
-                const container = document.getElementById('alertContainer');
-                if (container) {
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = `alert alert-${type}`;
-                    alertDiv.textContent = message;
-                    
-                    container.innerHTML = '';
-                    container.appendChild(alertDiv);
-                    
-                    if (type === 'success') {
-                        setTimeout(() => {
-                            alertDiv.remove();
-                        }, 5000);
-                    }
-                }
-            }
-        }
     </script>
+
 </body>
 </html>
