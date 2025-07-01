@@ -603,7 +603,7 @@ function resetRegistrationForm() {
             rut = rut.replace(/\./g, '').replace('-', '');
             if (!/^[0-9]+[0-9kK]{1}$/.test(rut)) return false;
             const t = parseInt(rut.slice(0, -1), 10);
-            const m = 0;
+            let m = 0;
             let s = 1;
             for (; t; s = (s + t % 10 * (9 - m++ % 6)) % 11);
             return (s ? s - 1 : 'k').toString() === rut.slice(-1).toLowerCase();
