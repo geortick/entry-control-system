@@ -1,0 +1,74 @@
+# Entry Control System - Facial Recognition Access Control (FIXED VERSION)
+# 
+# Entry Control System by geortick - Fixed to detect any person
+# Images: entry-control-backend-fixed:latest, ghcr.io/geortick/entry-control-frontend:1.1
+# Deploy with: podman play kube entry-control-system-fixed.yaml
+# Access at: http://localhost:8080 (main) | http://localhost:8080/admin.html (admin)
+# Default admin credentials: admin/admin
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: entry-control-system
+  name: entry-control-pod
+spec:
+  containers:
+  # MongoDB Database
+  - name: mongo-db
+    image: docker.io/library/mongo:latest
+    args:
+    - mongod
+    env:
+    - name: MONGO_INITDB_ROOT_USERNAME
+      value: mongo_user
+    - name: MONGO_INITDB_ROOT_PASSWORD
+      value: mongo_pass
+    ports:
+    - containerPort: 27017
+    volumeMounts:
+    - mountPath: /data/db
+      name: mongo-data
+    - mountPath: /data/configdb
+      name: mongo-config
+
+  # Python FastAPI Backend (FIXED)
+  - name: backend
+    image: localhost/entry-control-backend-fixed:latest
+    env:
+    - name: MONGO_URI
+      value: mongodb://mongo_user:mongo_pass@localhost:27017
+    ports:
+    - containerPort: 8000
+      hostPort: 8000
+
+  # Nginx Frontend (FIXED)
+  - name: frontend
+    image: localhost/entry-control-frontend-fixed:latest
+    ports:
+    - containerPort: 80
+      hostPort: 8080
+
+  volumes:
+  - name: mongo-data
+    emptyDir: {}
+  - name: mongo-config
+    emptyDir: {}
+
+---
+# Service to expose the application (optional, for reference)
+apiVersion: v1
+kind: Service
+metadata:
+  name: entry-control-service
+spec:
+  selector:
+    app: entry-control-system
+  ports:
+  - name: frontend
+    port: 8080
+    targetPort: 80
+  - name: backend
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP

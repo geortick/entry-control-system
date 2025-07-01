@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrada de Reconocimiento Facial con IA Avanzada</title>
+    <!-- Tailwind CSS para estilizado rápido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter para una tipografía limpia -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Configuration script -->
+    <script src="env-config.js"></script>
+    <script src="config.js"></script>
+    <style>
+        /* --- ESTILOS PERSONALIZADOS --- */
+
+        /* Estilo base para el cuerpo de la página */
+        body { 
+            font-family: 'Inter', sans-serif; /* Usa la fuente Inter */
+            overflow: hidden; /* Evita barras de scroll */
+        }
+
+        /* Estilo para que el video de la cámara cubra todo el fondo */
+        #video-feed { 
+            object-fit: cover; 
+            position: absolute; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; /* Se asegura que esté detrás de todo */
+            transform: scaleX(-1); /* Efecto espejo para que el usuario se vea de forma natural */
+        }
+
+        /* Animación de entrada para elementos de la UI */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(-10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Estilos para el modal (ventana emergente) */
+        .modal-backdrop { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro semitransparente */
+            backdrop-filter: blur(5px); /* Efecto de desenfoque en el fondo */
+            z-index: 40; 
+        }
+        .modal-content { 
+            position: fixed; 
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); /* Centra el modal perfectamente */
+            z-index: 50; 
+        }
+        
+        /* Animación de carga (spinner) */
+        .loader { 
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #3498db; 
+            border-radius: 50%; 
+            width: 30px; 
+            height: 30px; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        /* Animación para la alerta de seguridad */
+        @keyframes security-flash {
+            0%, 100% { background-color: #991b1b; } /* color rojo oscuro */
+            50% { background-color: #dc2626; } /* color rojo brillante */
+        }
+        .security-alert-bg {
+            animation: security-flash 1s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <!-- Elemento de video que mostrará la cámara web como fondo de pantalla. -->
+    <video id="video-feed" autoplay playsinline muted></video>
+
+    <!-- Contenedor principal para toda la interfaz de usuario superpuesta al video. -->
+    <div class="relative w-full h-screen flex flex-col items-center p-6 md:p-8">
+        
+        <!-- Banner de instrucciones en la esquina superior izquierda. -->
+        <div class="absolute top-6 left-6 md:top-8 md:left-8 bg-black/40 backdrop-blur-md rounded-lg shadow-lg p-4 max-w-xs fade-in">
+            <h3 class="font-bold text-md mb-1">Instrucciones</h3>
+            <p class="text-sm text-gray-200">Colóquese frente a la cámara y mantenga su rostro visible para el escaneo.</p>
+        </div>
+
+        <!-- Barra superior que contiene el mensaje de estado (centro) y el botón de admin (derecha). -->
+        <div class="w-full flex justify-center items-start">
+            <!-- El contenedor de estado se llenará dinámicamente con JavaScript. -->
+            <div id="status-container" class="absolute top-8 text-center"></div>
+            <!-- Botón de acceso a la página de administración. -->
+            <a href="/admin.html" id="admin-button" class="absolute top-6 right-6 md:top-8 md:right-8 bg-white/20 hover:bg-white/30 backdrop-blur-md p-3 rounded-full transition-all duration-300 ease-in-out shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 2a5 5 0 1 0 5.54 8.48A5 5 0 0 0 12 2zM20.9 22.5a9.96 9.96 0 0 0-17.8 0"/></svg>
+            </a>
+        </div>
+
+        <!-- Un div flexible para empujar los controles de simulación hacia la parte inferior. -->
+        <div class="flex-grow"></div>
+
+        <!-- 
+            INICIO: CONTROLES DE SIMULACIÓN (PARA DESARROLLO)
+            Esta sección está comentada para ocultarla en un entorno de producción.
+            Es útil para probar los diferentes estados de la UI sin necesidad de una cámara o un sistema de reconocimiento real.
+        -->
+        <!--
+        <div class="p-4 bg-black/50 rounded-lg backdrop-blur-sm text-center">
+            <h3 class="mb-2 font-semibold">Controles de Simulación</h3>
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="showRecognizedState('emp001')" class="px-3 py-2 bg-green-600 hover:bg-green-700 rounded-lg shadow-md transition-transform transform hover:scale-105">Reconocer Empleado</button>
+                <button onclick="showRecognizedState('vis002')" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg shadow-md transition-transform transform hover:scale-105">Reconocer Visitante</button>
+                <button id="sim-not-recognized" class="px-3 py-2 bg-red-500 hover:bg-red-600 rounded-lg shadow-md transition-transform transform hover:scale-105">No Reconocido</button>
+                <button id="sim-reset" class="px-3 py-2 bg-gray-500 hover:bg-gray-600 rounded-lg shadow-md transition-transform transform hover:scale-105">Reiniciar</button>
+            </div>
+        </div>
+        -->
+        <!-- FIN: CONTROLES DE SIMULACIÓN -->
+
+    </div>
+
+    <!-- 
+        MODAL DEL ASISTENTE DE IA
+        Esta es la ventana emergente que aparece cuando un rostro no es reconocido.
+        Está oculta por defecto (class="hidden").
+    -->
+    <div id="ai-assistant-modal" class="hidden">
+        <div class="modal-backdrop"></div>
+        <div id="modal-content-wrapper" class="modal-content bg-gray-800 rounded-xl shadow-2xl w-11/12 max-w-lg p-6 fade-in">
+            <!-- Vista principal del modal -->
+            <div id="modal-main-view">
+                 <h2 class="text-2xl font-bold mb-4 text-center">✨ Asistente de Visitantes IA</h2>
+                <!-- Vista inicial donde el usuario ingresa su información -->
+                <div id="modal-initial-view">
+                    <p class="mb-4 text-gray-300 text-center">Por favor, dime tu nombre completo, RUT y el motivo de tu visita.</p>
+                    <textarea id="visitor-input" class="w-full bg-gray-700 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Ej: 'Hola, soy Juan Pérez, RUT 12.345.678-9, y vengo a una entrevista con Ana García.'"></textarea>
+                </div>
+                <!-- Contenedor para el formulario dinámico si la IA detecta datos faltantes -->
+                <div id="visitor-form-container" class="hidden"></div>
+                <!-- Vista de carga mientras la IA procesa la información -->
+                <div id="modal-loader" class="hidden flex-col items-center justify-center my-4">
+                    <div class="loader"></div>
+                    <p id="loader-text" class="ml-4 mt-2 text-lg text-gray-300"></p>
+                </div>
+                <!-- Vista de éxito después de un registro correcto -->
+                <div id="modal-success-view" class="hidden text-center my-4"></div>
+                <!-- Botones de acción del modal -->
+                <div id="modal-buttons" class="mt-6 flex justify-end space-x-4">
+                    <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition">Cancelar</button>
+                    <button id="modal-submit-btn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">Enviar</button>
+                </div>
+            </div>
+             <!-- Vista de Alerta de Seguridad -->
+            <div id="security-alert-view" class="hidden text-center">
+                 <svg class="mx-auto h-16 w-16 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+                 </svg>
+                <h2 class="text-2xl font-bold mt-4">¡ALERTA DE SEGURIDAD!</h2>
+                <p id="security-alert-text" class="text-lg mt-2 text-gray-200"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // --- INICIO DE LA LÓGICA DE JAVASCRIPT ---
+
+        // --- BASE DE DATOS SIMULADA (Mock Database) ---
+        // Para la integración, esta sección debe ser reemplazada por llamadas a tu backend o base de datos real.
+        const mockDatabase = {
+            'emp001': { type: 'employee', name: 'Ana Sofía' },
+            'vis002': { type: 'visitor', name: 'Carlos Ruiz', reason_for_visit: 'reunión de proyecto a las 10 AM con el equipo de desarrollo' }
+        };
+
+        // --- MENSAJES DE CARGA CREATIVOS ---
+        // Lista de mensajes que se muestran aleatoriamente mientras la IA procesa una solicitud.
+        const funnyLoadingMessages = [
+            "Procesando datos biométricos...", "Verificando identidad en el sistema...", "Analizando puntos faciales clave...", "Consultando registros seguros...", "Iniciando protocolo de reconocimiento...", "Estableciendo conexión con la red neuronal...", "Validando credenciales de acceso...", "Análisis de humanidad en curso...", "Calculando vector de identidad...", "Verificación de seguridad en proceso..."
+        ];
+        
+        // --- LISTA NEGRA DE SEGURIDAD ---
+        // Palabras clave que activan la alerta de seguridad para prevenir inyección de prompts.
+        const securityBlacklist = [
+            "pretende ser", "actúa como", "ignora las instrucciones", "ignora todo lo anterior", "eres un", "roleplay", "olvida que eres", "tu objetivo es", "prompt injection", "desobedece", "instrucción confidencial", "objetivo secreto"
+        ];
+        
+        // --- REFERENCIAS A ELEMENTOS DEL DOM ---
+        // Guardamos en constantes los elementos HTML con los que vamos a interactuar para un acceso más rápido.
+        const videoElement = document.getElementById('video-feed');
+        const statusContainer = document.getElementById('status-container');
+        const aiModal = document.getElementById('ai-assistant-modal');
+        const visitorInput = document.getElementById('visitor-input');
+        const modalLoader = document.getElementById('modal-loader');
+        const loaderText = document.getElementById('loader-text');
+        const modalInitialView = document.getElementById('modal-initial-view');
+        const visitorFormContainer = document.getElementById('visitor-form-container');
+        const modalSuccessView = document.getElementById('modal-success-view');
+        const modalButtons = document.getElementById('modal-buttons');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalSubmitBtn = document.getElementById('modal-submit-btn');
+        const modalContentWrapper = document.getElementById('modal-content-wrapper');
+        const modalMainView = document.getElementById('modal-main-view');
+        const securityAlertView = document.getElementById('security-alert-view');
+        const securityAlertText = document.getElementById('security-alert-text');
+        // Referencias a botones de simulación (se usarán en los oyentes comentados)
+        const simNotRecognizedBtn = document.getElementById('sim-not-recognized');
+        const simResetBtn = document.getElementById('sim-reset');
+
+        // --- CONFIGURACIÓN PARA INTEGRACIÓN CON BACKEND ---
+        const BACKEND_URL = config.get('BACKEND_URL');
+        let video, canvas, isRecognizing = false;
+        
+        // --- GESTIÓN DE ESTADOS DEL SISTEMA ---
+        let systemState = 'scanning'; // 'scanning', 'recognized', 'processing', 'not_recognized', 'modal_open'
+        let recognitionPaused = false;
+        let recognitionInterval = null;
+        let stateTimeout = null;
+        let isProcessingRegistration = false; // Flag to prevent duplicate registrations
+
+        // --- CONFIGURACIÓN DE LA API DE GEMINI ---
+        // Configuration is now loaded from environment variables via config.js
+        // Set your API key in .env file as GEMINI_API_KEY=your_key_here
+        
+        /**
+         * Función central para realizar llamadas a la API de Gemini.
+         * @param {object} payload - El objeto de datos a enviar en la solicitud.
+         * @returns {Promise<object>} La respuesta JSON de la API.
+         */
+        async function callGemini(payload) {
+            if (!config.isAIEnabled()) {
+                throw new Error("AI features are not enabled or API key is not configured");
+            }
+            const response = await fetch(config.getGeminiApiUrl(), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+            const result = await response.json();
+            if (!result.candidates || !result.candidates[0].content.parts[0].text) {
+                throw new Error("Invalid API response structure.");
+            }
+            return result;
+        }
+
+        /**
+         * Configura y activa la cámara web del usuario.
+         */
+        async function setupCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        facingMode: 'user'
+                    }
+                });
+                videoElement.srcObject = stream;
+                
+                // Start automatic recognition every 5 seconds
+                startRecognitionLoop();
+            } catch (err) {
+                // Si el usuario niega el acceso, muestra un error.
+                statusContainer.innerHTML = `<div class="bg-red-500/80 p-4 rounded-lg shadow-xl"><h2 class="text-lg font-bold">Acceso a Cámara Denegado</h2><p class="text-sm">Por favor, permita el acceso a la cámara.</p></div>`;
+            }
+        }
+
+        /**
+         * Inicia el bucle de reconocimiento automático.
+         */
+        function startRecognitionLoop() {
+            if (recognitionInterval) {
+                clearInterval(recognitionInterval);
+            }
+            recognitionInterval = setInterval(() => {
+                if (!recognitionPaused && systemState === 'scanning') {
+                    captureAndRecognize();
+                }
+            }, 5000);
+        }
+        
+        /**
+         * Pausa el reconocimiento automático.
+         */
+        function pauseRecognition() {
+            recognitionPaused = true;
+        }
+        
+        /**
+         * Reanuda el reconocimiento automático.
+         */
+        function resumeRecognition() {
+            recognitionPaused = false;
+            systemState = 'scanning';
+        }
+        
+        /**
+         * Captura el frame actual y lo envía al backend para reconocimiento.
+         */
+        async function captureAndRecognize() {
+            if (isRecognizing || !videoElement.srcObject || recognitionPaused) return;
+            
+            isRecognizing = true;
+            systemState = 'processing';
+            
+            try {
+                // Create canvas to capture frame
+                if (!canvas) {
+                    canvas = document.createElement('canvas');
+                }
+                
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoElement, 0, 0);
+                
+                // Convert to blob and send to backend
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', blob, 'capture.jpg');
+                        
+                        const response = await fetch(`${BACKEND_URL}/recognize/`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        handleRecognitionResult(result);
+                    } catch (error) {
+                        console.error('Recognition error:', error);
+                        // Don't show errors during automatic recognition to avoid spam
+                    } finally {
+                        isRecognizing = false;
+                    }
+                }, 'image/jpeg', 0.8);
+            } catch (error) {
+                console.error('Capture error:', error);
+                isRecognizing = false;
+            }
+        }
+
+        /**
+         * Maneja el resultado del reconocimiento facial desde el backend.
+         */
+        function handleRecognitionResult(result) {
+            if (result.status === 'success') {
+                if (result.result === 'Recognized') {
+                    // Usuario reconocido - pausar reconocimiento y mostrar saludo personalizado
+                    pauseRecognition();
+                    systemState = 'recognized';
+                    showRecognizedStateFromBackend(result);
+                } else if (result.result === 'Not recognized') {
+                    // Rostro detectado pero no reconocido - pausar y mostrar opciones
+                    pauseRecognition();
+                    systemState = 'not_recognized';
+                    showNotRecognizedState();
+                } else {
+                    // No se detectó rostro - continuar escaneando
+                    systemState = 'scanning';
+                }
+            } else {
+                // Error en reconocimiento - continuar escaneando
+                systemState = 'scanning';
+            }
+        }
+
+        /**
+         * Muestra estado de usuario reconocido usando datos del backend.
+         */
+        async function showRecognizedStateFromBackend(result) {
+            clearStatus();
+            const userName = result.name;
+            const userType = result.user_type;
+            const motive = result.motive || null;
+            const rut = result.rut || null;
+
+            // Muestra un mensaje de carga aleatorio mientras se genera el saludo.
+            const randomMessage = funnyLoadingMessages[Math.floor(Math.random() * funnyLoadingMessages.length)];
+            statusContainer.innerHTML = `<div class="fade-in bg-blue-500/80 p-4 rounded-lg shadow-xl text-center"><h2 class="text-2xl font-bold">${randomMessage}</h2></div>`;
+            
+            try {
+                // Prepara el prompt para la IA según el tipo de usuario y motivo.
+                let prompt;
+                if (userType === 'Authorized') {
+                    prompt = `Genera un mensaje motivacional corto, único y positivo para un empleado llamado ${userName} que inicia su jornada.`;
+                } else {
+                    // Para visitantes, incluir el motivo si está disponible
+                    if (motive) {
+                        prompt = `Genera un saludo de bienvenida personalizado y cordial para un visitante llamado ${userName}, recordándole amistosamente su motivo de visita: "${motive}". Haz que se sienta bienvenido y desea que tenga éxito en su visita.`;
+                    } else {
+                        prompt = `Genera un saludo de bienvenida cordial para un visitante llamado ${userName}. Deséale éxito de forma amistosa.`;
+                    }
+                }
+
+                // Siempre intentar generar saludo con IA si está habilitada
+                if (config.isAIEnabled()) {
+                    try {
+                        const aiResult = await callGemini({ contents: [{ role: "user", parts: [{ text: prompt }] }] });
+                        const greeting = aiResult.candidates[0].content.parts[0].text;
+                        
+                        // Crear mensaje con información adicional para visitantes
+                        let additionalInfo = '';
+                        if (userType === 'Visitant' && motive) {
+                            additionalInfo = `<p class="text-sm text-green-200 mt-2">Motivo: ${motive}</p>`;
+                        }
+                        
+                        statusContainer.innerHTML = `<div class="fade-in bg-green-500/80 p-4 rounded-lg shadow-xl max-w-md mx-auto"><h2 class="text-2xl font-bold mb-2">Bienvenido(a), ${userName}</h2><p class="text-lg italic">"${greeting}"</p>${additionalInfo}</div>`;
+                    } catch (aiError) {
+                        console.warn("AI greeting failed, using generic message:", aiError);
+                        // Si la IA falla, mostrar mensaje genérico pero personalizado con motivo
+                        let fallbackMessage = `<div class="fade-in bg-green-500/80 p-4 rounded-lg shadow-xl max-w-md mx-auto"><h2 class="text-2xl font-bold mb-2">¡Bienvenido(a), ${userName}!</h2><p class="text-lg">Acceso concedido</p>`;
+                        if (userType === 'Visitant' && motive) {
+                            fallbackMessage += `<p class="text-sm text-green-200 mt-2">Motivo: ${motive}</p>`;
+                        }
+                        fallbackMessage += `</div>`;
+                        statusContainer.innerHTML = fallbackMessage;
+                    }
+                } else {
+                    // Si no hay API key de Gemini, muestra saludo genérico pero personalizado con motivo
+                    let fallbackMessage = `<div class="fade-in bg-green-500/80 p-4 rounded-lg shadow-xl max-w-md mx-auto"><h2 class="text-2xl font-bold mb-2">¡Bienvenido(a), ${userName}!</h2><p class="text-lg">Acceso concedido</p>`;
+                    if (userType === 'Visitant' && motive) {
+                        fallbackMessage += `<p class="text-sm text-green-200 mt-2">Motivo: ${motive}</p>`;
+                    }
+                    fallbackMessage += `</div>`;
+                    statusContainer.innerHTML = fallbackMessage;
+                }
+                
+                // Vuelve al estado de escaneo después de 5 segundos
+                stateTimeout = setTimeout(() => {
+                    resumeRecognition();
+                    showScanningState();
+                }, 5000);
+            } catch (error) {
+                // Si hay un error general, muestra un saludo genérico.
+                console.error("Error in recognition flow:", error);
+                let errorMessage = `<div class="fade-in bg-green-500/80 p-4 rounded-lg shadow-xl max-w-md mx-auto"><h2 class="text-2xl font-bold mb-2">¡Bienvenido(a), ${userName}!</h2><p class="text-lg">Acceso concedido</p>`;
+                if (userType === 'Visitant' && motive) {
+                    errorMessage += `<p class="text-sm text-green-200 mt-2">Motivo: ${motive}</p>`;
+                }
+                errorMessage += `</div>`;
+                statusContainer.innerHTML = errorMessage;
+                stateTimeout = setTimeout(() => {
+                    resumeRecognition();
+                    showScanningState();
+                }, 4000);
+            }
+        }
+
+        // --- GESTIÓN DE ESTADOS DE LA INTERFAZ ---
+
+        /** Limpia el contenedor de mensajes de estado. */
+        function clearStatus() { statusContainer.innerHTML = ''; }
+        
+        /** Muestra el estado inicial "Escaneando...". */
+        function showScanningState() {
+            clearStatus();
+            statusContainer.innerHTML = `<div class="fade-in bg-gray-800/80 backdrop-blur-md px-6 py-3 rounded-lg shadow-lg"><p class="text-xl font-medium text-gray-300">Escaneando...</p></div>`;
+        }
+        
+        /**
+         * Muestra el estado de "Rostro Reconocido" (para simulación).
+         * @param {string} userId - El ID del usuario reconocido para buscarlo en la base de datos.
+         */
+        async function showRecognizedState(userId) {
+            clearStatus();
+            const user = mockDatabase[userId];
+            if (!user) { showNotRecognizedState(); return; }
+
+            // Muestra un mensaje de carga aleatorio mientras se genera el saludo.
+            const randomMessage = funnyLoadingMessages[Math.floor(Math.random() * funnyLoadingMessages.length)];
+            statusContainer.innerHTML = `<div class="fade-in bg-blue-500/80 p-4 rounded-lg shadow-xl text-center"><h2 class="text-2xl font-bold">${randomMessage}</h2></div>`;
+            
+            try {
+                // Prepara el prompt para la IA según el tipo de usuario.
+                let prompt = user.type === 'employee'
+                    ? `Genera un mensaje motivacional corto, único y positivo para un empleado llamado ${user.name} que inicia su jornada.`
+                    : `Genera un saludo de bienvenida para un visitante llamado ${user.name}, recordándole amistosamente su motivo de visita: "${user.reason_for_visit}". Deséale éxito de forma cordial.`;
+
+                // Llama a la IA y muestra el saludo personalizado.
+                if (config.isAIEnabled()) {
+                    const result = await callGemini({ contents: [{ role: "user", parts: [{ text: prompt }] }] });
+                    const greeting = result.candidates[0].content.parts[0].text;
+                    
+                    statusContainer.innerHTML = `<div class="fade-in bg-green-500/80 p-4 rounded-lg shadow-xl max-w-md mx-auto"><h2 class="text-2xl font-bold mb-2">Bienvenido(a), ${user.name}</h2><p class="text-lg italic">"${greeting}"</p></div>`;
+                } else {
+                    statusContainer.innerHTML = `<div class="fade-in bg-green-500/80 p-4 rounded-lg shadow-xl max-w-md mx-auto"><h2 class="text-2xl font-bold mb-2">Bienvenido(a), ${user.name}</h2><p class="text-lg">Acceso concedido</p></div>`;
+                }
+            } catch (error) {
+                // Si la IA falla, muestra un saludo genérico.
+                console.error("Error generating greeting:", error);
+                statusContainer.innerHTML = `<div class="fade-in bg-green-500/80 p-4 rounded-lg"><h2 class="text-2xl font-bold">Bienvenido(a), ${user.name}</h2></div>`;
+            }
+        }
+
+        /** Muestra el estado "Rostro No Reconocido" con opciones para el usuario. */
+        function showNotRecognizedState() {
+            clearStatus();
+            
+            statusContainer.innerHTML = `
+                <div class="fade-in text-center space-y-4">
+                    <div class="bg-red-500/80 p-4 rounded-lg shadow-xl">
+                        <h2 class="text-2xl font-bold">Rostro No Reconocido</h2>
+                        <p class="text-lg">Su rostro fue detectado pero no está registrado en el sistema.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button id="register-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                            ✨ Registrar Visita
+                        </button>
+                        <button id="try-again-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                            🔄 Intentar de Nuevo
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Agregar event listeners con un pequeño delay para asegurar que los elementos existan
+            setTimeout(() => {
+                const registerBtn = document.getElementById('register-btn');
+                const tryAgainBtn = document.getElementById('try-again-btn');
+                
+                if (registerBtn) {
+                    registerBtn.addEventListener('click', () => {
+                        systemState = 'modal_open';
+                        openAIAssistant();
+                    });
+                }
+                
+                if (tryAgainBtn) {
+                    tryAgainBtn.addEventListener('click', () => {
+                        resumeRecognition();
+                        showScanningState();
+                    });
+                }
+            }, 100);
+        }
+
+        // --- LÓGICA DE SEGURIDAD ---
+
+        /**
+         * Revisa si el texto del usuario contiene frases de la lista negra.
+         * @param {string} text - El texto a verificar.
+         * @returns {boolean} - True si se encuentra una amenaza, de lo contrario False.
+         */
+        function securityCheck(text) {
+            const lowerCaseText = text.toLowerCase();
+            return securityBlacklist.some(term => lowerCaseText.includes(term));
+        }
+        
+        /** Activa la alerta de seguridad visual y sonora. */
+        function triggerSecurityAlert() {
+            const alertMessage = "Tenemos razones para creer que quieres vulnerar el sistema. Notificando al guardia de seguridad.";
+            
+            // Reproduce el archivo de audio personalizado de alerta
+            try {
+                const audio = new Audio('alerta.mp3');
+                audio.volume = 0.8; // Ajusta el volumen (0.0 a 1.0)
+                audio.play().catch(error => {
+                    console.warn('No se pudo reproducir el audio de alerta:', error);
+                    // Fallback: usar texto-a-voz si falla el audio
+                    const utterance = new SpeechSynthesisUtterance(alertMessage);
+                    utterance.lang = 'es-ES';
+                    utterance.rate = 0.9;
+                    speechSynthesis.speak(utterance);
+                });
+            } catch (error) {
+                console.warn('Error al crear el objeto Audio:', error);
+                // Fallback: usar texto-a-voz si hay error
+                const utterance = new SpeechSynthesisUtterance(alertMessage);
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                speechSynthesis.speak(utterance);
+            }
+
+            // Cambia la UI al modo de alerta.
+            modalMainView.classList.add('hidden');
+            securityAlertText.textContent = alertMessage;
+            securityAlertView.classList.remove('hidden');
+            modalContentWrapper.classList.remove('bg-gray-800');
+            modalContentWrapper.classList.add('security-alert-bg');
+
+            // Bloquea y cierra el modal después de 5 segundos.
+            setTimeout(() => { closeAIAssistant(); }, 5000);
+        }
+
+
+        // --- LÓGICA DEL MODAL DEL ASISTENTE DE IA ---
+        
+        /** Reinicia el estado de procesamiento para permitir nuevos registros. */
+        function resetProcessingState() {
+            isProcessingRegistration = false;
+            modalSubmitBtn.disabled = false;
+            modalSubmitBtn.textContent = 'Enviar';
+            modalSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        /** Reinicia el estado del modal a su vista inicial. */
+        function resetModalState() {
+            modalMainView.classList.remove('hidden');
+            securityAlertView.classList.add('hidden');
+            modalContentWrapper.classList.add('bg-gray-800');
+            modalContentWrapper.classList.remove('security-alert-bg');
+            modalInitialView.classList.remove('hidden');
+            visitorFormContainer.classList.add('hidden');
+            visitorFormContainer.innerHTML = '';
+            modalSuccessView.classList.add('hidden');
+            modalLoader.classList.add('hidden');
+            modalButtons.classList.remove('hidden');
+            modalSubmitBtn.textContent = 'Enviar';
+            modalSubmitBtn.onclick = handleInitialVisitorSubmit;
+            visitorInput.value = '';
+        }
+
+        /** Abre el modal del asistente. */
+        function openAIAssistant() { 
+            resetModalState(); 
+            aiModal.classList.remove('hidden');
+            systemState = 'modal_open';
+            pauseRecognition();
+        }
+
+        /** Cierra el modal y vuelve al estado de "Escaneando...". */
+        function closeAIAssistant() { 
+            aiModal.classList.add('hidden'); 
+            resumeRecognition();
+            showScanningState(); 
+        }
+        
+        /** * Muestra un formulario para que el usuario complete los datos que la IA no pudo extraer.
+         * @param {object} data - Objeto con los datos que sí se pudieron extraer.
+         */
+        function showForm(data) {
+            visitorFormContainer.innerHTML = `
+                <p class="text-yellow-400 text-sm mb-4 text-center">Parece que faltan algunos datos. Por favor, complétalos a continuación.</p>
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label for="form-name" class="block text-sm font-medium text-gray-300">Nombre Completo</label>
+                        <input type="text" id="form-name" value="${data.nombre_completo || ''}" class="mt-1 w-full bg-gray-700 rounded-lg p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="form-rut" class="block text-sm font-medium text-gray-300">RUT</label>
+                        <input type="text" id="form-rut" value="${data.rut || ''}" class="mt-1 w-full bg-gray-700 rounded-lg p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                     <div>
+                        <label for="form-reason" class="block text-sm font-medium text-gray-300">Motivo de la Visita</label>
+                        <textarea id="form-reason" rows="2" class="mt-1 w-full bg-gray-700 rounded-lg p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">${data.motivo_visita || ''}</textarea>
+                    </div>
+                </div>`;
+            modalInitialView.classList.add('hidden');
+            visitorFormContainer.classList.remove('hidden');
+            modalLoader.classList.add('hidden');
+            modalButtons.classList.remove('hidden');
+            modalSubmitBtn.onclick = handleFormSubmit;
+            
+            // Restablecer estado de procesamiento cuando se muestra el formulario
+            resetProcessingState();
+        }
+
+        /** * Muestra el mensaje de éxito final.
+         * @param {object} data - Objeto con los datos completos del visitante.
+         */
+        function showSuccess(data) {
+             modalSuccessView.innerHTML = `
+                <strong class="text-green-400 text-xl">¡Registro Exitoso, ${data.nombre_completo}!</strong><br>
+                <p class="mt-2 text-gray-300">Hemos notificado a recepción de tu llegada. Por favor, toma asiento.</p>`;
+            modalInitialView.classList.add('hidden');
+            visitorFormContainer.classList.add('hidden');
+            modalLoader.classList.add('hidden');
+            modalSuccessView.classList.remove('hidden');
+            modalSubmitBtn.textContent = 'Cerrar';
+            modalSubmitBtn.onclick = closeAIAssistant;
+            modalCancelBtn.classList.add('hidden');
+            modalButtons.classList.remove('hidden');
+            
+            // Reset processing state to prevent duplicate registrations
+            resetProcessingState();
+        }
+
+        /** * Llama a la IA para extraer información estructurada del texto del usuario.
+         * @param {string} text - El texto ingresado por el usuario.
+         * @returns {Promise<object>} - Un objeto con nombre_completo, rut y motivo_visita.
+         */
+        async function extractVisitorInfo(text) {
+            const prompt = `De la siguiente frase, extrae el nombre completo del visitante, su RUT (número de identificación de Chile) y el motivo de su visita. Responde únicamente con un objeto JSON con las claves "nombre_completo", "rut", y "motivo_visita". Si alguna información no está presente, usa una cadena vacía "" como valor. No incluyas nada más en tu respuesta, ni siquiera los marcadores de bloque de código JSON. Frase: "${text}"`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            const result = await callGemini(payload);
+            let jsonString = result.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(jsonString);
+        }
+
+        /**
+         * Maneja el envío inicial de texto del visitante.
+         */
+        async function handleInitialVisitorSubmit() {
+            // Prevenir múltiples registros simultáneos
+            if (isProcessingRegistration) {
+                console.log('Registration already in progress, ignoring duplicate request');
+                return;
+            }
+            
+            const visitorText = visitorInput.value.trim();
+            if (visitorText.length < 10) {
+                alert("Por favor, proporciona más detalles para que la IA pueda procesar tu solicitud.");
+                return;
+            }
+
+            // *** ¡Punto de control de seguridad! ***
+            if (securityCheck(visitorText)) {
+                triggerSecurityAlert();
+                return; // Detiene el procesamiento si se detecta una amenaza.
+            }
+            
+            // Marcar como procesando
+            isProcessingRegistration = true;
+            
+            // Deshabilitar botón para prevenir clics múltiples
+            modalSubmitBtn.disabled = true;
+            modalSubmitBtn.textContent = 'Procesando...';
+            modalSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            // Muestra un mensaje de carga.
+            const randomMessage = funnyLoadingMessages[Math.floor(Math.random() * funnyLoadingMessages.length)];
+            loaderText.textContent = randomMessage;
+            modalLoader.classList.remove('hidden');
+            modalLoader.classList.add('flex');
+            modalInitialView.classList.add('hidden');
+            modalButtons.classList.add('hidden');
+
+            try {
+                // Si no hay API key, pasar directamente al formulario
+                if (!config.isAIEnabled()) {
+                    showForm({ nombre_completo: "", rut: "", motivo_visita: visitorText });
+                    return;
+                }
+
+                // Llama a la IA para procesar el texto.
+                const data = await extractVisitorInfo(visitorText);
+                const isComplete = data.nombre_completo && data.rut && data.motivo_visita;
+                
+                // Decide si mostrar el éxito o el formulario de completación.
+                if (isComplete) {
+                    // Register visitor directly (isProcessingRegistration already checked above)
+                    await registerVisitorToBackend(data);
+                } else {
+                    showForm(data);
+                }
+            } catch (error) {
+                console.error("AI Assistant Error:", error);
+                alert("Lo sentimos, ha ocurrido un error al procesar tu solicitud. Por favor, intenta de nuevo.");
+                resetModalState();
+                resetProcessingState();
+            }
+        }
+
+        /** Maneja el envío del formulario de completación de datos. */
+        async function handleFormSubmit() {
+            // Prevent multiple submissions
+            if (isProcessingRegistration) {
+                console.log('Registration already in progress from form, ignoring duplicate request');
+                return;
+            }
+            
+            const completeData = {
+                nombre_completo: document.getElementById('form-name').value.trim(),
+                rut: document.getElementById('form-rut').value.trim(),
+                motivo_visita: document.getElementById('form-reason').value.trim()
+            };
+            if (!completeData.nombre_completo || !completeData.rut || !completeData.motivo_visita) {
+                alert("Por favor, completa todos los campos.");
+                return;
+            }
+            
+            // Mark as processing to prevent duplicates
+            isProcessingRegistration = true;
+            
+            // Enviar al backend para registro
+            await registerVisitorToBackend(completeData);
+        }
+
+        /**
+         * Registra al visitante en el backend.
+         */
+        async function registerVisitorToBackend(data) {
+            try {
+                // Capturar imagen actual para el registro
+                if (!canvas) {
+                    canvas = document.createElement('canvas');
+                }
+                
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoElement, 0, 0);
+                
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', blob, 'visitor.jpg');
+                        formData.append('name', data.nombre_completo);
+                        formData.append('rut', data.rut || '');
+                        formData.append('motive', data.motivo_visita);
+                        formData.append('user_type', 'Visitant');
+                        
+                        const response = await fetch(`${BACKEND_URL}/register/`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.status === 'success') {
+                            showSuccess(data);
+                        } else {
+                            alert(result.message || 'Error en el registro');
+                            resetModalState();
+                            resetProcessingState();
+                        }
+                    } catch (error) {
+                        console.error('Registration error:', error);
+                        alert('Error de conexión al registrar. Por favor, intenta de nuevo.');
+                        resetModalState();
+                        resetProcessingState();
+                    }
+                }, 'image/jpeg', 0.8);
+            } catch (error) {
+                console.error('Capture error:', error);
+                alert('Error al capturar la imagen para el registro.');
+                resetModalState();
+            }
+        }
+        
+        // --- OYENTES DE EVENTOS E INICIALIZACIÓN ---
+        
+        // Asigna las funciones a los eventos de clic de los botones principales.
+        modalCancelBtn.addEventListener('click', closeAIAssistant);
+        
+        /* --- OYENTES DE EVENTOS DE SIMULACIÓN (Comentados para producción) --- */
+        // Si descomentas el HTML de los controles, descomenta también estas líneas.
+        /*
+        simNotRecognizedBtn.addEventListener('click', showNotRecognizedState);
+        simResetBtn.addEventListener('click', showScanningState);
+        */
+        
+        /** Se ejecuta cuando la página ha cargado completamente. */
+        window.addEventListener('load', () => {
+            // Validate configuration
+            const validation = config.validate();
+            if (!validation.valid) {
+                console.warn('Configuration issues detected:', validation.issues);
+            }
+            
+            // Log configuration status (without sensitive data)
+            console.log('Entry Control System Configuration:', config.debug());
+            
+            setupCamera(); // Inicia la cámara.
+            showScanningState(); // Muestra el estado inicial.
+        });
+        
+        /** Limpia timeouts al salir */
+        window.addEventListener('beforeunload', () => {
+            if (recognitionInterval) clearInterval(recognitionInterval);
+            if (stateTimeout) clearTimeout(stateTimeout);
+        });
+    </script>
+</body>
+</html>
