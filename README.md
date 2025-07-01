@@ -1,43 +1,30 @@
 # Entry Control System
 
-Minimal facial recognition entry control system with AI features.
+Facial recognition entry control with AI features.
 
-## Quick Setup
+## Setup
 
-1. **Create configuration:**
-   ```bash
-   ./setup.sh
-   ```
+1. Create config: `./setup.sh`
+2. Edit `.env` with your Gemini API key
+3. Deploy: `podman play kube entry-control-system.yaml`
 
-2. **Edit .env file:**
-   ```bash
-   nano .env
-   # Replace 'your_api_key_here' with your actual Gemini API key
-   # Get key at: https://aistudio.google.com/app/apikey
-   ```
+## Access
 
-3. **Deploy with Podman:**
-   ```bash
-   podman play kube entry-control-system.yaml
-   ```
+- Main: http://localhost:8080
+- Admin: http://localhost:8080/admin.html (admin/admin)
 
-4. **Access the system:**
-   - Main interface: http://localhost:8080
-   - Admin panel: http://localhost:8080/admin.html (admin/admin)
+## Features
+
+- Face recognition for authorized users
+- AI-powered visitor registration
+- Admin panel for user management
+- Security alerts with custom audio
 
 ## Security
 
-- ✅ API keys stored in `.env` (not exposed to frontend)
-- ✅ AI processing handled by backend only
-- ✅ No sensitive data in containers
-
-## Files
-
-- `setup.sh` - Creates .env file
-- `.env` - Configuration (not committed to git)
-- `entry-control-system.yaml` - Container deployment
-- `frontend/` - Web interface files
-- `backend/` - API server files
+- API keys in `.env` only (not committed)
+- No secrets exposed to frontend
+- Clean deployment
 
 ### 🔧 **Critical Bug Fix**
 - **🛡️ Fixed Duplicate Registration Bug**: AI visitor registration no longer creates duplicate entries
