@@ -377,10 +377,9 @@
             else if (activeTab.textContent.includes('Autorizados')) loadAuthorized();
         }
 
-        function resetRegistrationForm() {
+function resetRegistrationForm() {
             registerForm.reset();
             document.getElementById('visitorMotiveField').classList.add('hidden');
-            document.getElementById('photoPreview').classList.add('hidden');
             document.getElementById('cameraPlaceholder').classList.remove('hidden');
             stopCamera();
             capturedBlob = null;
